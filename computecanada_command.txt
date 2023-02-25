@@ -1,0 +1,92 @@
+[yk2hui@gra-login3 ncsn]$ history
+    1  2023-02-24 16:37:20 ls
+    2  2023-02-24 16:39:05 cd ncsn/
+    3  2023-02-24 16:39:51 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+    4  2023-02-24 16:40:04 pip install torch
+    5  2023-02-24 16:40:18 cd ..
+    6  2023-02-24 16:40:22 pip3 install torch
+    7  2023-02-24 16:40:37 pip install pip._internal
+    8  2023-02-24 16:41:20 module avail python
+    9  2023-02-24 16:41:26 ls
+   10  2023-02-24 16:41:46 apt-get install python3-pip
+   11  2023-02-24 16:42:01 python3 -m pip --version
+   12  2023-02-24 16:43:59 sudo apt-get -y install python3-pip
+   13  2023-02-24 16:44:18 apt-get -y install python3-pip
+   14  2023-02-24 16:44:25 vdb-get -y install python3-pip
+   15  2023-02-24 16:44:33 vdb-get install python3-pip
+   16  2023-02-24 16:44:48 pip3 install torch
+   17  2023-02-24 16:50:22 module load python/3.10
+   18  2023-02-24 16:50:32 pip3 install torch
+   19  2023-02-24 16:51:58 cd ncsn/
+   20  2023-02-24 16:52:09 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   21  2023-02-24 16:52:21 pip3 install yaml
+   22  2023-02-24 16:54:02 pip3 install pyyaml
+   23  2023-02-24 16:54:07 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   24  2023-02-24 16:54:15 pip3 install numpy
+   25  2023-02-24 16:54:29 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   26* 2023-02-24 16:54:36
+   27  2023-02-24 16:54:59 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   28  2023-02-24 16:55:12 pip3 install seaborn
+   29  2023-02-24 16:55:41 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   30  2023-02-24 16:55:51 pip3 install tensorboardX
+   31  2023-02-24 16:56:25 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   32  2023-02-24 16:56:33 pip3 install torchvision
+   33  2023-02-24 16:57:01 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   34  2023-02-24 16:57:16 pip3 install tqdm
+   35  2023-02-24 16:57:22 pip3 install pillow
+   36  2023-02-24 16:57:26 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   37  2023-02-24 16:58:23 cd ~
+   38  2023-02-24 16:59:00 cd ncsn/
+   39  2023-02-24 16:59:08 git pull
+   40  2023-02-24 16:59:12 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   41  2023-02-24 16:59:21 pip3 install scipy
+   42  2023-02-24 17:00:04 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   43  2023-02-24 17:00:25 pip3 install sklearn
+   44  2023-02-24 17:00:48 python main_finance.py --runner AnnealRunnerFin --config annealfin_Heston.yml --run runfin --doc Heston -o samples_Heston
+   45  2023-02-24 17:02:20 nvidia -smi
+   46  2023-02-24 17:02:53 nvcc --version
+   47  2023-02-24 17:04:06 python
+   48  2023-02-24 17:04:33 nvcc --version
+   49  2023-02-24 17:04:49 python
+   50  2023-02-24 17:07:04 nano run_train.sh
+   51  2023-02-24 17:09:19 nano pytorch-test.py
+   52  2023-02-24 17:10:02 sbatch run_train.sh
+   53  2023-02-24 17:10:05 sq
+   54  2023-02-24 17:10:59 nano run_train.sh
+   55  2023-02-24 17:11:39 sbatch --time=2:00:00 run_train.sh
+   56  2023-02-24 17:11:45 sq
+   57  2023-02-24 17:24:52 history
+
+    1  2023-02-24 16:14:59 ls
+    2  2023-02-24 16:20:04 git clone git@github.com:ykh720/ncsn.git
+    3  2023-02-24 16:20:24 sudo git clone git@github.com:ykh720/ncsn.git
+    4  2023-02-24 16:22:57 git clone https://github.com/ykh720/ncsn.git
+    5  2023-02-24 16:23:18 ls
+    6  2023-02-24 16:23:20  cd ncsn/
+    7  2023-02-24 16:23:21 ls
+    8  2023-02-24 16:23:54 cd ..
+    9  2023-02-24 16:23:54 ls
+   10  2023-02-24 16:24:07 touch testing.py
+   11  2023-02-24 16:24:11 nano testing.py
+   12  2023-02-24 16:24:34 touch running.sh
+   13  2023-02-24 16:24:41 nano running.sh
+   14  2023-02-24 16:25:08 ls
+   15  2023-02-24 16:25:35 sbatch --time=00:30:00 running.sh
+   16  2023-02-24 16:25:54 nano running.sh
+   17  2023-02-24 16:26:45 sbatch --time=00:30:00 running.sh
+   18  2023-02-24 16:26:51 sq
+   19  2023-02-24 16:27:04 vim testing.py
+   20  2023-02-24 16:27:11 vim running.sh
+   21  2023-02-24 16:27:25 vim running.sh
+   22  2023-02-24 16:27:30 sq
+   23  2023-02-24 16:27:32 ls
+   24  2023-02-24 16:27:37 nano slurm-4063041.out
+   25  2023-02-24 16:28:20 python testing.py
+   26  2023-02-24 16:29:56 nano running.sh
+   27  2023-02-24 16:30:22 sbatch running.sh
+   28  2023-02-24 16:30:27 sq
+   29  2023-02-24 16:30:45 nano running.sh
+   30  2023-02-24 16:31:13 ls
+   31  2023-02-24 16:31:20 cd ncsn/
+   32  2023-02-24 16:31:21 ls
+   33  2023-02-24 17:31:02 history

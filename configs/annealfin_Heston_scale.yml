@@ -36,7 +36,7 @@ data:
   logit_transform: false
   random_flip: false
   finname: "Heston" # for easier data recognition 
-  scale: false
+  scale: true
   
 
 model:

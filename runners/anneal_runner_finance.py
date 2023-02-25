@@ -58,6 +58,19 @@ class AnnealRunnerFin():
         totalvarsurface = scipy.io.loadmat('HestonIVSgrid_NI.mat')
         totalvarsurface = totalvarsurface['HestonIVS2D']
 
+        if self.config.data.scale:
+            # if scale is true, we use total implied variance instead! 
+
+            tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
+            tlist = tlist['tlist'] # note that they are 2D array 
+            tlist = tlist.reshape((-1))
+            # Klist = scipy.io.loadmat('msft_Klist.mat')
+            Klist = scipy.io.loadmat(self.config.data.finname + '_Klist.mat')
+            Klist = Klist['Klist'] # note that they are 2D array
+            Klist = Klist.reshape((-1))
+            tlist_broadcast = tlist.reshape((1, len(tlist), 1))
+            totalvarsurface = totalvarsurface**2 * tlist_broadcast
+
         IVStrain, IVStest = train_test_split(totalvarsurface, test_size = 0.2, random_state = 42)
 
         dataset = Dset(IVStrain)
@@ -209,6 +222,7 @@ class AnnealRunnerFin():
         tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
         tlist = tlist['tlist'] # note that they are 2D array 
         tlist = tlist.reshape((-1))
+        tlist_broadcast = tlist.reshape((1, len(tlist), 1))
         # Klist = scipy.io.loadmat('msft_Klist.mat')
         Klist = scipy.io.loadmat(self.config.data.finname + '_Klist.mat')
         Klist = Klist['Klist'] # note that they are 2D array
@@ -260,6 +274,8 @@ class AnnealRunnerFin():
                 savepath = os.path.join(self.args.image_folder, 'ivs_image_{}.png'.format(i))
                 # if i > step_per_noise * self.config.model.num_classes * 0.8:
                 if i > -1:
+                    if self.config.data.scale:
+                        sample = torch.sqrt(sample/ tlist_broadcast)
                     IVS_visualize(sample.reshape((self.config.data.image_size,self.config.data.image_size)), Klist, tlist, savepath=savepath, plotname = str(i) + "step")
                 if i == 999:
                     print('step', i)
@@ -373,6 +389,7 @@ class AnnealRunnerFin():
             tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
             tlist = tlist['tlist'] # note that they are 2D array 
             tlist = tlist.reshape((-1))
+            tlist_broadcast = tlist.reshape((1, len(tlist), 1))
             # Klist = scipy.io.loadmat('msft_Klist.mat')
             Klist = scipy.io.loadmat(self.config.data.finname + '_Klist.mat')
             Klist = Klist['Klist'] # note that they are 2D array
@@ -382,10 +399,16 @@ class AnnealRunnerFin():
             totalvarsurface = scipy.io.loadmat('HestonIVSgrid_NI.mat')
             # totalvarsurface = totalvarsurface['totalvarsurface']
             totalvarsurface = totalvarsurface['HestonIVS2D']
+
+            if self.config.data.scale:
+                # if scale is true, we use total implied variance instead! 
+                totalvarsurface = totalvarsurface**2 * tlist_broadcast
+
             IVStrain, IVStest = train_test_split(totalvarsurface, test_size = 0.2, random_state = 42)
 
             dataset = Dset(IVStest)
-            batch_size = 1
+            # batch_size = 10
+            batch_size = 1282 # all data in IVStest
             dataloader = DataLoader(dataset, batch_size=batch_size,shuffle=True, drop_last=True)
             # we use test dataset, use the same variable dataloader to avoid codes changes 
 
@@ -400,17 +423,30 @@ class AnnealRunnerFin():
 
 
             # sample from uniform?! why
-            samples = torch.rand(batch_size, batch_size, 1, self.config.data.image_size, self.config.data.image_size,
+
+            # samples = torch.rand(batch_size, batch_size, 1, self.config.data.image_size, self.config.data.image_size,
+            #                      device=self.config.device)
+
+            samples = torch.rand(batch_size, 1, self.config.data.image_size, self.config.data.image_size,
                                  device=self.config.device)
+                                 
             mask = torch.ones(self.config.data.image_size,self.config.data.image_size, dtype=torch.bool)
             mask[1,1] = False
             mask[6,6] = False
             all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.00002)
+            # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.000008)
+
             torch.save(refer_image, os.path.join(self.args.image_folder, 'refer_image.pth'))
 
+            if self.config.data.scale:
+                refer_image = torch.sqrt(refer_image / tlist_broadcast)
+
             for i, sample in enumerate(tqdm.tqdm(all_samples)):
-                sample = sample.view(batch_size**2, self.config.data.channels, self.config.data.image_size,
+                # sample = sample.view(batch_size**2, self.config.data.channels, self.config.data.image_size,
+                #                      self.config.data.image_size)
+                sample = sample.view(batch_size, self.config.data.channels, self.config.data.image_size,
                                      self.config.data.image_size)
+
 
                 if self.config.data.logit_transform:
                     sample = torch.sigmoid(sample)
@@ -435,8 +471,12 @@ class AnnealRunnerFin():
                         inpainting_error(sample.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(), 
                             refer_image.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(), Klist, tlist, savepath2, )
                 else:
-                    savepath = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
-                    inpainting_error(sample.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(), refer_image.cpu(), Klist, tlist, savepath, )
+                    if i > 800:
+                        savepath = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
+                        if self.config.data.scale:
+                            sample = torch.sqrt(sample/ tlist_broadcast)
+                        inpainting_error(sample.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(),
+                                          refer_image.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(), Klist, tlist, savepath, )
                 
                 torch.save(sample, os.path.join(self.args.image_folder, 'image_completion_raw_{}.pth'.format(i)))
         

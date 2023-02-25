@@ -42,7 +42,7 @@ def IVS_visualize(gen_row, Klist, tlist, savepath,   plotname = "",):
 
     ax.set_xlabel('log moneyness')
     ax.set_ylabel('Time to Maturity')
-    ax.set_zlabel('Total IVS')
+    ax.set_zlabel('Implied volatility')
 
     ax.set_title(plotname + ' IVS')
     plt.savefig(savepath)
@@ -60,7 +60,9 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     plt.figure(1,figsize=(14,4))
     ax=plt.subplot(1,3,1)
     # err = np.mean(100 * np.abs((surfivspred - surfivs)/ surfivs), axis =0) 
-    err = torch.mean(100 * torch.abs((surfivspred - surfivs)/ surfivs), axis =0) 
+    # print(surfivs.shape)
+    # print(surfivspred.shape)
+    err = torch.mean(100 * torch.abs((surfivspred - surfivs)/ surfivs), dim =0) 
     plt.title("Average relative error",fontsize=15,y=1.04)
     plt.imshow(err.reshape(len(tlist),len(Klist)))
     plt.colorbar(format=mtick.PercentFormatter())
@@ -79,7 +81,7 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
 
     ax=plt.subplot(1,3,2)
     # err = 100*np.std(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
-    err = 100*torch.std(torch.abs((surfivspred-surfivs)/surfivs),axis = 0)
+    err = 100*torch.std(torch.abs((surfivspred-surfivs)/surfivs),dim = 0)
     plt.title("Std relative error",fontsize=15,y=1.04)
     plt.imshow(err.reshape(len(tlist),len(Klist)))
     plt.colorbar(format=mtick.PercentFormatter())
@@ -92,7 +94,7 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
 
     ax=plt.subplot(1,3,3)
     # err = 100*np.max(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
-    err = 100*torch.max(torch.abs((surfivspred-surfivs)/surfivs),axis = 0)[0]
+    err = 100*torch.max(torch.abs((surfivspred-surfivs)/surfivs),dim = 0)[0]
     plt.title("Maximum relative error",fontsize=15,y=1.04)
     plt.imshow(err.reshape(len(tlist),len(Klist)))
     plt.colorbar(format=mtick.PercentFormatter())
