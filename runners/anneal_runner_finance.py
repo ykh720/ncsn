@@ -275,7 +275,7 @@ class AnnealRunnerFin():
                 # if i > step_per_noise * self.config.model.num_classes * 0.8:
                 if i > -1:
                     if self.config.data.scale:
-                        sample = torch.sqrt(sample/ tlist_broadcast)
+                        sample = torch.sqrt(sample.cpu()/ tlist_broadcast)
                     IVS_visualize(sample.reshape((self.config.data.image_size,self.config.data.image_size)), Klist, tlist, savepath=savepath, plotname = str(i) + "step")
                 if i == 999:
                     print('step', i)
@@ -407,8 +407,8 @@ class AnnealRunnerFin():
             IVStrain, IVStest = train_test_split(totalvarsurface, test_size = 0.2, random_state = 42)
 
             dataset = Dset(IVStest)
-            # batch_size = 10
-            batch_size = 1282 # all data in IVStest
+            batch_size = 10
+            # batch_size = 1282 # all data in IVStest
             dataloader = DataLoader(dataset, batch_size=batch_size,shuffle=True, drop_last=True)
             # we use test dataset, use the same variable dataloader to avoid codes changes 
 
@@ -439,7 +439,7 @@ class AnnealRunnerFin():
             torch.save(refer_image, os.path.join(self.args.image_folder, 'refer_image.pth'))
 
             if self.config.data.scale:
-                refer_image = torch.sqrt(refer_image / tlist_broadcast)
+                refer_image = torch.sqrt(refer_image.cpu() / tlist_broadcast)
 
             for i, sample in enumerate(tqdm.tqdm(all_samples)):
                 # sample = sample.view(batch_size**2, self.config.data.channels, self.config.data.image_size,
@@ -474,7 +474,7 @@ class AnnealRunnerFin():
                     if i > 800:
                         savepath = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
                         if self.config.data.scale:
-                            sample = torch.sqrt(sample/ tlist_broadcast)
+                            sample = torch.sqrt(sample.cpu()/ tlist_broadcast)
                         inpainting_error(sample.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(),
                                           refer_image.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(), Klist, tlist, savepath, )
                 
