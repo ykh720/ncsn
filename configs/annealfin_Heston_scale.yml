@@ -1,9 +1,9 @@
 training:
   batch_size: 128
   n_epochs: 45000
-  n_iters: 12001
+  n_iters: 501
   ngpu: 1
-  snapshot_freq: 4000
+  snapshot_freq: 500
   algo: 'dsm'
   anneal_power: 2.0
 
@@ -48,6 +48,12 @@ model:
   ngf: 128
   ### configurations for MNIST
   # ngf: 64
+
+  # Actually we should add these parameters in the parser
+  # steps for each noise level, default is 100
+  # n_steps_each: 100 
+  # learning rate for each step, default 0.00002 or 0.000008
+  # step_lr: 0.00002
 
 optim:
   weight_decay: 0.000

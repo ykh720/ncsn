@@ -25,7 +25,11 @@ def parse_args_and_config():
     parser.add_argument('--resume_training', action='store_true', help='Whether to resume training')
     parser.add_argument('-o', '--image_folder', type=str, default='images', help="The directory of image outputs")
     parser.add_argument('--inpainting', action='store_true', help='Whether to test the model inpainting feature, need to use it with --test')
-
+    parser.add_argument('--n_steps_each', type=int, default= 100, help='sampling inpainting parameter: steps for each noise level')
+    parser.add_argument('--step_lr', type=float, default= 0.00002, help='sampling inpainting parameter: learning rate for each step')
+    parser.add_argument('--testsize', type=int, default= 10, help='sampling inpainting parameter: numnber of test samples for error calculation')
+    parser.add_argument('--noarb', action='store_true', help='sampling inpainting parameter: whether to employ noarb sampling method')
+    # without --noarb, then we will use the default sampling method
 
     args = parser.parse_args()
     run_id = str(os.getpid())
@@ -123,7 +127,10 @@ def main():
         else:
             #### Change is made in here!
             if args.inpainting:
-                runner.test_inpainting()
+                if args.noarb:
+                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, True)
+                else:
+                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, False)
             else:
                 runner.test()
     except:

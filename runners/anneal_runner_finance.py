@@ -339,7 +339,24 @@ class AnnealRunnerFin():
         # imgs[0].save(os.path.join(self.args.image_folder, "movie.gif"), save_all=True, append_images=imgs[1:], duration=1, loop=0)
 
     def anneal_Langevin_dynamics_inpainting(self, x_mod, refer_image, scorenet, sigmas, mask, n_steps_each=100,
-                                            step_lr=0.000008):
+                                            step_lr=0.000008, noarb = False):
+        
+        tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
+        tlist = tlist['tlist'] # note that they are 2D array 
+        tlist = tlist.reshape((-1))
+        tlist_broadcast = tlist.reshape((1, len(tlist), 1))
+        # Klist = scipy.io.loadmat('msft_Klist.mat')
+        Klist = scipy.io.loadmat(self.config.data.finname + '_Klist.mat')
+        Klist = Klist['Klist'] # note that they are 2D array
+        Klist = Klist.reshape((-1))
+        # note that S0 = 100
+        logmlist = np.log(Klist / 100)
+
+        # these should be treated as inputs, or in the future deduce a independent conditions that is based on sigma
+        # also note that this change makes the code only applicable to num_class = 10 for now.
+        dlossthreshold = torch.tensor([7.1260, 3.8, 2.2, 1.4, 0.9, 0.55, 0.23, 0.07, 0.01, 0])
+        clossthreshold = torch.tensor([3.9, 2.3, 1.34, 0.76, 0.42, 0.21, 0.09, 0.03, 0.005, 0.0312])
+
         images = []
 
         refer_image = refer_image.unsqueeze(1).expand(-1, x_mod.shape[1], -1, -1, -1)
@@ -356,19 +373,50 @@ class AnnealRunnerFin():
                 # corrupted_half_image = half_refer_image + torch.randn_like(half_refer_image) * sigma
                 corrupted_half_image = half_refer_image
                 x_mod[:, :, mask] = refer_image[..., mask] # one more step compared to the algo 
+
+                dlosslist = []
+                closslist = []
+
                 for s in range(n_steps_each):
                     images.append(torch.clamp(x_mod, 0.0, 1.0).to('cpu'))
                     noise = torch.randn_like(x_mod) * np.sqrt(step_size * 2)
                     grad = scorenet(x_mod, labels)
-                    x_mod = x_mod + step_size * grad + noise
+
+                    # print(x_mod.shape)
+                    x_prop = x_mod + step_size * grad + noise
+                    dloss = Dcondloss_torch(torch.squeeze(x_prop), torch.squeeze(x_prop), logmlist) # .unsqueeze(0)
+                    closs = calloss_torch(torch.squeeze(x_prop), torch.squeeze(x_prop), tlist) # .unsqueeze(0)
+                    dlosslist.append(dloss)
+                    closslist.append(closs)
+                    
+                    if noarb: 
+                        index = (dloss < dlossthreshold[c]) & (closs < clossthreshold[c])
+                        x_mod[index] = x_prop[index]
+                    else: 
+                        x_mod = x_prop
+                        
                     # x_mod[:, :, :, :16] = corrupted_half_image
                     x_mod[:, :, mask] = refer_image[..., mask]
                     # print("class: {}, step_size: {}, mean {}, max {}".format(c, step_size, grad.abs().mean(),
                     #                                                          grad.abs().max()))
 
+                print('\n current sigma' , sigma)
+                dloss_thislevel = torch.cat(dlosslist, dim=0)
+                closs_thislevel = torch.cat(closslist, dim=0)
+                d25quantile = torch.quantile(dloss_thislevel, 0.25)
+                c25quantile = torch.quantile(closs_thislevel, 0.25)
+
+                print('d25quantile:', d25quantile)
+                print('c25quantile:', c25quantile)
+                # print(c) # starts from 0 
+
             return images
 
-    def test_inpainting(self):
+    def test_inpainting(self, n_steps_each=100, step_lr=0.00002, batch_size=10, noarb=False):
+        # n_steps_each number of steps for sampling in each noise level
+        # step_lr learning rate for each step
+        # batch_size is actually the number of test samples to be considered 
+
         states = torch.load(os.path.join(self.args.log, 'checkpoint.pth'), map_location=self.config.device)
         score = CondRefineNetDilated(self.config).to(self.config.device)
         score = torch.nn.DataParallel(score)
@@ -408,7 +456,8 @@ class AnnealRunnerFin():
 
             dataset = Dset(IVStest)
             # batch_size = 10
-            batch_size = 1282 # all data in IVStest
+            # batch_size = 1282 # all data in IVStest
+            # batch_size = 2
             dataloader = DataLoader(dataset, batch_size=batch_size,shuffle=True, drop_last=True)
             # we use test dataset, use the same variable dataloader to avoid codes changes 
 
@@ -419,8 +468,13 @@ class AnnealRunnerFin():
 
             if batch_size == 1:
                 savepath = os.path.join(self.args.image_folder, 'originalIVS_inpainting.png')
-                IVS_visualize(refer_image.reshape((self.config.data.image_size,self.config.data.image_size)), Klist, tlist, savepath=savepath, plotname = "original")
-
+                if self.config.data.scale:
+                    savepath2 = os.path.join(self.args.image_folder, 'originaltotalvar_inpainting.png')
+                    IVS_visualize(refer_image.reshape((self.config.data.image_size,self.config.data.image_size)), Klist, tlist, savepath=savepath2, plotname = "original total var")
+                    refer_image_unscaled = torch.sqrt(refer_image.cpu() / tlist_broadcast)
+                    IVS_visualize(refer_image_unscaled.reshape((self.config.data.image_size,self.config.data.image_size)), Klist, tlist, savepath=savepath, plotname = "original IV")
+                else:
+                    IVS_visualize(refer_image.reshape((self.config.data.image_size,self.config.data.image_size)), Klist, tlist, savepath=savepath, plotname = "original IV")
 
             # sample from uniform?! why
 
@@ -433,10 +487,12 @@ class AnnealRunnerFin():
             mask = torch.ones(self.config.data.image_size,self.config.data.image_size, dtype=torch.bool)
             mask[1,1] = False
             mask[6,6] = False
-            all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.00002)
-            # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.000008)
 
-            torch.save(refer_image, os.path.join(self.args.image_folder, 'refer_image.pth'))
+            # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.00002)
+            # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.000008)
+            all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, n_steps_each, step_lr, noarb)
+
+            # torch.save(refer_image, os.path.join(self.args.image_folder, 'refer_image.pth'))
 
             if self.config.data.scale:
                 refer_image = torch.sqrt(refer_image.cpu() / tlist_broadcast)
@@ -446,7 +502,11 @@ class AnnealRunnerFin():
                 #                      self.config.data.image_size)
                 sample = sample.view(batch_size, self.config.data.channels, self.config.data.image_size,
                                      self.config.data.image_size)
-
+                
+                if self.config.data.scale:
+                    sample = torch.sqrt(sample.cpu()/tlist_broadcast)
+                    # print(sample)
+                    # print(refer_image)
 
                 if self.config.data.logit_transform:
                     sample = torch.sigmoid(sample)
@@ -466,19 +526,30 @@ class AnnealRunnerFin():
                     # print(sample.shape)
                     # print(type(refer_image))
                     # print(refer_image.shape)
-                    if i > 800: 
+                    if i > n_steps_each * self.config.model.num_classes * 0: 
                         savepath2 = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
-                        inpainting_error(sample.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(), 
-                            refer_image.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(), Klist, tlist, savepath2, )
+                        inpainting_error(refer_image.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(),
+                             sample.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(),
+                               Klist, tlist, savepath2, )
+                elif batch_size == 10: 
+                    if i > n_steps_each * self.config.model.num_classes * 0: 
+                        savepath = os.path.join(self.args.image_folder, 'ivs_image_inpainting{}.png'.format(i))
+                        IVS_visualize(sample[0].reshape((self.config.data.image_size,self.config.data.image_size)), Klist, tlist, savepath=savepath, plotname = str(i) + "step_inpainting")
+                        savepath2 = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
+                        inpainting_error(refer_image.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(),
+                                         sample.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(), Klist, tlist, savepath2, )
+                        # a = sample.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu()
+                        # b = refer_image.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu()
+                        # print(torch.sum(torch.abs(a-b), dim=(0,1,2)))
+
                 else:
-                    if i > 800:
+                    # if i > 800:
+                    if i > n_steps_each * self.config.model.num_classes * 0:
                         savepath = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
-                        if self.config.data.scale:
-                            sample = torch.sqrt(sample.cpu()/ tlist_broadcast)
-                        inpainting_error(sample.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(),
-                                          refer_image.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(), Klist, tlist, savepath, )
+                        inpainting_error(refer_image.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(),
+                                         sample.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(), Klist, tlist, savepath, )
                 
-                torch.save(sample, os.path.join(self.args.image_folder, 'image_completion_raw_{}.pth'.format(i)))
+                # torch.save(sample, os.path.join(self.args.image_folder, 'image_completion_raw_{}.pth'.format(i)))
         
         elif self.config.data.dataset == 'CELEBA':
             dataset = CelebA(root=os.path.join(self.args.run, 'datasets', 'celeba'), split='test',

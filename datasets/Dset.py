@@ -63,6 +63,9 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     # print(surfivs.shape)
     # print(surfivspred.shape)
     err = torch.mean(100 * torch.abs((surfivspred - surfivs)/ surfivs), dim =0) 
+    # print(torch.max(err)[0])
+    print(err.shape)
+    print(err)
     plt.title("Average relative error",fontsize=15,y=1.04)
     plt.imshow(err.reshape(len(tlist),len(Klist)))
     plt.colorbar(format=mtick.PercentFormatter())
@@ -82,6 +85,9 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     ax=plt.subplot(1,3,2)
     # err = 100*np.std(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
     err = 100*torch.std(torch.abs((surfivspred-surfivs)/surfivs),dim = 0)
+    # print(torch.max(err)[0])
+    # print(err.shape)
+
     plt.title("Std relative error",fontsize=15,y=1.04)
     plt.imshow(err.reshape(len(tlist),len(Klist)))
     plt.colorbar(format=mtick.PercentFormatter())
@@ -95,6 +101,9 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     ax=plt.subplot(1,3,3)
     # err = 100*np.max(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
     err = 100*torch.max(torch.abs((surfivspred-surfivs)/surfivs),dim = 0)[0]
+    # print(torch.max(err)[0])
+    # print(err.shape)
+
     plt.title("Maximum relative error",fontsize=15,y=1.04)
     plt.imshow(err.reshape(len(tlist),len(Klist)))
     plt.colorbar(format=mtick.PercentFormatter())
@@ -106,4 +115,67 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     plt.ylabel("Maturity",fontsize=15,labelpad=5)
     plt.tight_layout()
     plt.savefig(savepath, dpi=300)
+    
+    # not sure
+    # plt.close()
     # plt.show()
+
+def tf_diff_axis_0(a):
+    return a[1:]-a[:-1]
+
+def tf_diff_axis_1(a):
+    return a[:,1:]-a[:,:-1]
+
+def tf_diff_axis_2(a):
+    return a[:,:,1:]-a[:,:,:-1]
+
+def Dcondloss_torch(y_true, y_pred, Klist, loss_multiplier=1):
+    """Need to return a tensor of shape (n,) where n for the number of samples
+        The shape of y_true should be (n,height, width)
+    """
+    # only use tf libraries for performance reason
+    # x = tf.convert_to_tensor(Klist, dtype=tf.float32)
+    x = torch.as_tensor(Klist, device=y_true.device)
+    dx = tf_diff_axis_0(x)
+    df = tf_diff_axis_2(y_pred)/dx 
+    ddf = tf_diff_axis_2(df)/dx[0:-1]
+    x = x[:-2]
+    f = y_pred[:,:,:-2]
+    df = df[:,:,:-1]
+    inter1 = (1- x * df / (2 * f))**2 
+    inter2 = df/4 * (1/f + 1/4)
+    inter3 = ddf /2 
+    Dcond = inter1 - inter2 + inter3    
+    
+    loss = torch.clamp(-Dcond, min = 0 ,) #  clip_value_max=tf.math.reduce_max(-Dcond))
+    
+    loss = torch.maximum(loss, torch.tensor(0))
+    loss = torch.sum(loss, dim=1)
+    loss = torch.sum(loss, dim=1)
+
+    # maybe sum is to large? 
+    Ngrid = y_true.shape[1] * y_true.shape[2]
+    
+#     loss = Dcondtotalvaropt(y_pred, x = Klist)
+#     loss = tf.convert_to_tensor(loss, dtype=tf.float32)
+    return loss_multiplier * loss / Ngrid
+
+def calloss_torch(y_true, y_pred, tlist, loss_multiplier=1):
+    """Need to return a tensor of shape (n,) where n for the number of samples
+        The shape of y_true should be (n,height, width)
+    """
+    x = torch.as_tensor(tlist, device=y_true.device)
+    dx = tf_diff_axis_0(x)
+    dx = torch.reshape(dx , (1,dx.shape[0],1))
+    df = tf_diff_axis_1(y_pred) / dx
+
+    loss = torch.clamp(-df, min = 0 ,) #  clip_value_max=tf.math.reduce_max(-Dcond))
+
+    # loss = tf.clip_by_value(-df, clip_value_min=0.0, clip_value_max=tf.math.reduce_max(-df))
+    loss = torch.maximum(loss, torch.tensor(0))
+    loss = torch.sum(loss, dim=1)
+    loss = torch.sum(loss, dim=1)
+    # maybe sum is to large? 
+    Ngrid = y_true.shape[1] * y_true.shape[2]
+    return loss_multiplier * loss / Ngrid
+
