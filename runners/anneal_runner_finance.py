@@ -55,7 +55,7 @@ class AnnealRunnerFin():
         # totalvarsurface = totalvarsurface['totalvarsurface']
 
         ## Edited at Feb 19, data obtain from Heston model
-        totalvarsurface = scipy.io.loadmat('HestonIVSgrid_NI.mat')
+        totalvarsurface = scipy.io.loadmat('HestonIVSgrid_NI25652.mat')
         totalvarsurface = totalvarsurface['HestonIVS2D']
 
         if self.config.data.scale:
