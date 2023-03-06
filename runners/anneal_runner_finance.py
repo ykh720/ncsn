@@ -55,7 +55,8 @@ class AnnealRunnerFin():
         # totalvarsurface = totalvarsurface['totalvarsurface']
 
         ## Edited at Feb 19, data obtain from Heston model
-        totalvarsurface = scipy.io.loadmat('HestonIVSgrid_NI25652.mat')
+        # totalvarsurface = scipy.io.loadmat('HestonIVSgrid_NI25652.mat')
+        totalvarsurface = scipy.io.loadmat(self.config.data.datasetpath)
         totalvarsurface = totalvarsurface['HestonIVS2D']
 
         if self.config.data.scale:
@@ -283,7 +284,7 @@ class AnnealRunnerFin():
                     print(sample)
                 if i == 0:
                     # totalvarsurface = scipy.io.loadmat('msft_hestonlike_IVS.mat') # the address is relative to the address of thescript that calls this class
-                    totalvarsurface = scipy.io.loadmat('HestonIVSgrid_NI.mat')
+                    totalvarsurface = scipy.io.loadmat(self.config.data.datasetpath)
                     # totalvarsurface = totalvarsurface['totalvarsurface']
                     totalvarsurface = totalvarsurface['HestonIVS2D']
                     IVS_visualize(totalvarsurface[i], Klist, tlist, savepath=os.path.join(self.args.image_folder, 'ivs_image_original{}.png'.format(i)))
@@ -454,7 +455,7 @@ class AnnealRunnerFin():
             Klist = Klist.reshape((-1))
 
             # totalvarsurface = scipy.io.loadmat('msft_hestonlike_IVS.mat') # the address is relative to the address of thescript that calls this class
-            totalvarsurface = scipy.io.loadmat('HestonIVSgrid_NI.mat')
+            totalvarsurface = scipy.io.loadmat(self.config.data.datasetpath)
             # totalvarsurface = totalvarsurface['totalvarsurface']
             totalvarsurface = totalvarsurface['HestonIVS2D']
 

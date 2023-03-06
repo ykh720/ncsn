@@ -37,6 +37,7 @@ data:
   random_flip: false
   finname: "Heston" # for easier data recognition 
   scale: true
+  datasetpath: "HestonIVSgrid_NI.mat"
   
 
 model:
