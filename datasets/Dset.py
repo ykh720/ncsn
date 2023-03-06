@@ -64,8 +64,8 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     # print(surfivspred.shape)
     err = torch.mean(100 * torch.abs((surfivspred - surfivs)/ surfivs), dim =0) 
     # print(torch.max(err)[0])
-    print(err.shape)
-    print(err)
+    # print(err.shape)
+    # print(err)
     plt.title("Average relative error",fontsize=15,y=1.04)
     plt.imshow(err.reshape(len(tlist),len(Klist)))
     plt.colorbar(format=mtick.PercentFormatter())
@@ -117,8 +117,8 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     plt.savefig(savepath, dpi=300)
     
     # not sure
-    # plt.close()
-    # plt.show()
+    plt.close()
+    plt.show()
 
 def tf_diff_axis_0(a):
     return a[1:]-a[:-1]
