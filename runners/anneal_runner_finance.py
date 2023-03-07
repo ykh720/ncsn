@@ -111,6 +111,12 @@ class AnnealRunnerFin():
             np.exp(np.linspace(np.log(self.config.model.sigma_begin), np.log(self.config.model.sigma_end),
                                self.config.model.num_classes))).float().to(self.config.device)
 
+        # r = 1.6681005372000586, simgas[1] / sigmas[2]
+        # if we want to fix r, given sigma_begin, sigma_end
+        # then we should pick num_classes n by 
+        # n = (np.log(sigma_begin) - np.log(sigma_end))/ np.log(r) + 1
+        # for sigma_begin = 1, sigma_end = 0.001
+        # n = 15 (after round up to nearest integer)
 
         for epoch in range(self.config.training.n_epochs):
             for i, X in enumerate(dataloader):
@@ -342,7 +348,7 @@ class AnnealRunnerFin():
     def anneal_Langevin_dynamics_inpainting(self, x_mod, refer_image, scorenet, sigmas, mask, n_steps_each=100,
                                             step_lr=0.000008, noarb = False):
         
-        print('noarbitrage sampling', noarb)
+        print('noarbitrage sampling:', noarb)
         tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
         tlist = tlist['tlist'] # note that they are 2D array 
         tlist = tlist.reshape((-1))
@@ -352,7 +358,8 @@ class AnnealRunnerFin():
         Klist = Klist['Klist'] # note that they are 2D array
         Klist = Klist.reshape((-1))
         # note that S0 = 100
-        logmlist = np.log(Klist / 100)
+        r = 0.03
+        logmlist = np.log(Klist / 100) - r* tlist
 
         # these should be treated as inputs, or in the future deduce a independent conditions that is based on sigma
         # also note that this change makes the code only applicable to num_class = 10 for now.
@@ -388,11 +395,18 @@ class AnnealRunnerFin():
                     # print(x_mod.shape)
                     x_prop = x_mod + step_size * grad + noise
 
-                    dloss = Dcondloss_torch(torch.squeeze(x_prop), torch.squeeze(x_prop), logmlist) # .unsqueeze(0)
-                    closs = calloss_torch(torch.squeeze(x_prop), torch.squeeze(x_prop), tlist) # .unsqueeze(0)
-                    dlosslist.append(dloss)
-                    closslist.append(closs)
-                    
+                    if self.config.data.scale:
+                        dloss = Dcondloss_torch(torch.squeeze(x_prop), torch.squeeze(x_prop), logmlist) # .unsqueeze(0)
+                        closs = calloss_torch(torch.squeeze(x_prop), torch.squeeze(x_prop), tlist) # .unsqueeze(0)
+                        dlosslist.append(dloss)
+                        closslist.append(closs)
+                    else: 
+                        x_prop_scale = x_prop**2 * torch.from_numpy(tlist_broadcast).float().to(self.config.device)
+                        dloss = Dcondloss_torch(torch.squeeze(x_prop_scale), torch.squeeze(x_prop_scale), logmlist) # .unsqueeze(0)
+                        closs = calloss_torch(torch.squeeze(x_prop_scale), torch.squeeze(x_prop_scale), tlist) # .unsqueeze(0)
+                        dlosslist.append(dloss)
+                        closslist.append(closs)
+
                     if noarb: 
                         # index = (dloss < dlossthreshold[c]) & (closs < clossthreshold[c])
                         index = (dloss <= dlossold) & (closs <= clossold)
@@ -421,7 +435,7 @@ class AnnealRunnerFin():
 
             return images
 
-    def test_inpainting(self, n_steps_each=100, step_lr=0.00002, batch_size=10, noarb=False):
+    def test_inpainting(self, n_steps_each=100, step_lr=0.00002, batch_size=10, noarb=False, mask_choice="2"):
         # n_steps_each number of steps for sampling in each noise level
         # step_lr learning rate for each step
         # batch_size is actually the number of test samples to be considered 
@@ -496,8 +510,25 @@ class AnnealRunnerFin():
                                  device=self.config.device)
                                  
             mask = torch.ones(self.config.data.image_size,self.config.data.image_size, dtype=torch.bool)
-            mask[1,1] = False
-            mask[6,6] = False
+            if mask_choice == "2":
+                mask[1,1] = False
+                mask[6,6] = False
+            elif mask_choice == "half":  
+                indexlist = [(1,1), (1,3), (1,5), (2,2), (2,4), (2,6), (3,1), (3,3), (3,5),
+                             (4,2), (4,4), (4,6), (5,1), (5,3), (5,5), (6,2), (6,4), (6,6)]
+                for x in indexlist:
+                    mask[x] = False
+            elif mask_choice == "out1":
+                indexlist = [(0,0), (0,2), (0,4), (0,6), (1,7), (3,7), (5,7), (7,7),
+                             (2,0), (4,0), (6,0), (7,1), (7,3), (7,5)]
+                for x in indexlist:
+                    mask[x] = False
+            elif mask_choice == "out2":
+                indexlist1 = [(0,x) for x in range(8)] + [(x,0) for x in range(8)]
+                indexlist2 = [(7,x) for x in range(8)] + [(x,7) for x in range(8)]
+                indexlist = indexlist1 + indexlist2
+                for x in indexlist:
+                    mask[x] = False
 
             # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.00002)
             # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.000008)
@@ -538,13 +569,13 @@ class AnnealRunnerFin():
                     # print(sample.shape)
                     # print(type(refer_image))
                     # print(refer_image.shape)
-                    if i > n_steps_each * self.config.model.num_classes * 0.9: 
+                    if i > n_steps_each * self.config.model.num_classes - 10: 
                         savepath2 = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
                         inpainting_error(refer_image.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(),
                              sample.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(),
                                Klist, tlist, savepath2, )
                 else: # batch_size == 10  
-                    if i > n_steps_each * self.config.model.num_classes * 0.9: 
+                    if i > n_steps_each * self.config.model.num_classes - 10: 
                         if self.config.data.scale:
                             savepath = os.path.join(self.args.image_folder, 'totalvar_image_inpainting{}.png'.format(i))
                             IVS_visualize(sample[0].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = str(i) + "step_inpainting")

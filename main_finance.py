@@ -29,6 +29,7 @@ def parse_args_and_config():
     parser.add_argument('--step_lr', type=float, default= 0.00002, help='sampling inpainting parameter: learning rate for each step')
     parser.add_argument('--testsize', type=int, default= 10, help='sampling inpainting parameter: numnber of test samples for error calculation')
     parser.add_argument('--noarb', action='store_true', help='sampling inpainting parameter: whether to employ noarb sampling method')
+    parser.add_argument('--mask', type=str, default="2", help='mask type, default is 2, 2 points missing')
     # without --noarb, then we will use the default sampling method
 
     args = parser.parse_args()
@@ -128,9 +129,9 @@ def main():
             #### Change is made in here!
             if args.inpainting:
                 if args.noarb:
-                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, True)
+                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, True, args.mask)
                 else:
-                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, False)
+                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, False, args.mask)
             else:
                 runner.test()
     except:

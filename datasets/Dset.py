@@ -40,7 +40,7 @@ def IVS_visualize(gen_row, Klist, tlist, savepath,   plotname = "",):
     Z = testGANy
     surf = ax.plot_surface(X, Y, Z)
 
-    ax.set_xlabel('log moneyness')
+    ax.set_xlabel('Strike')
     ax.set_ylabel('Time to Maturity')
     ax.set_zlabel('Implied volatility')
 
