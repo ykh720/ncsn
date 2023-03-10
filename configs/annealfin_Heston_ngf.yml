@@ -1,0 +1,63 @@
+training:
+  batch_size: 128
+  n_epochs: 45000
+  n_iters: 12001
+  ngpu: 1
+  snapshot_freq: 4000
+  algo: 'dsm'
+  anneal_power: 2.0
+
+data:
+  ## mnist
+  # dataset: "MNIST"
+  # image_size: 28
+  # channels: 1
+  # logit_transform: false
+  # random_flip: false
+
+  ## celeba
+  # dataset: "CELEBA"
+  # image_size: 32
+  # channels: 3
+  # logit_transform: false
+  # random_flip: true
+
+ ## cifar10
+  # dataset: "CIFAR10"
+  # image_size: 32
+  # channels: 3
+  # logit_transform: false
+  # random_flip: true
+
+ ## finance 
+  dataset: "Finance"
+  image_size: 8
+  channels: 1
+  logit_transform: false
+  random_flip: false
+  finname: "Heston" # for easier data recognition 
+  scale: false
+  datasetpath: "HestonIVSgrid_NI.mat"
+  
+
+model:
+  sigma_begin: 1
+  sigma_end: 0.01
+  num_classes: 10 
+  batch_norm: false
+  ## configurations for CelebA, CIFAR10
+  # ngf: 128
+  ### configurations for MNIST
+  # ngf: 64
+  ### config for heston 
+  ## small dataset, ~6000
+  ngf: 8
+  ## larger dataset, ~22000, can also use ngf: 32
+  # ngf: 16
+
+optim:
+  weight_decay: 0.000
+  optimizer: "Adam"
+  lr: 0.001
+  beta1: 0.9
+  amsgrad: false

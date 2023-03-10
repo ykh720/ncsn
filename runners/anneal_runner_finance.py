@@ -97,6 +97,11 @@ class AnnealRunnerFin():
 
         score = torch.nn.DataParallel(score)
 
+        pytorch_total_params = sum(p.numel() for p in score.parameters() if p.requires_grad)
+        print('Total number of parameters:', pytorch_total_params)
+        
+        # return 0
+
         optimizer = self.get_optimizer(score.parameters())
 
         if self.args.resume_training:
@@ -149,7 +154,7 @@ class AnnealRunnerFin():
                 if step >= self.config.training.n_iters:
                     return 0
 
-                if step % 20 == 0:
+                if step % 100 == 0:
                     score.eval()
                     try:
                         test_X= next(test_iter)
@@ -346,7 +351,7 @@ class AnnealRunnerFin():
         # imgs[0].save(os.path.join(self.args.image_folder, "movie.gif"), save_all=True, append_images=imgs[1:], duration=1, loop=0)
 
     def anneal_Langevin_dynamics_inpainting(self, x_mod, refer_image, scorenet, sigmas, mask, n_steps_each=100,
-                                            step_lr=0.000008, noarb = False):
+                                            step_lr=0.000008, noarb = False, sampmethod=2):
         
         print('noarbitrage sampling:', noarb)
         tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
@@ -373,6 +378,7 @@ class AnnealRunnerFin():
 
         x_mod = x_mod.view(-1, self.config.data.channels, self.config.data.image_size ,self.config.data.image_size)
         # half_refer_image = refer_image[..., :self.config.data.image_size//2]
+        testsize = x_mod.shape[0]
         with torch.no_grad():
             for c, sigma in tqdm.tqdm(enumerate(sigmas), total=len(sigmas), desc="annealed Langevin dynamics sampling inpainting"):
                 labels = torch.ones(x_mod.shape[0], device=x_mod.device) * c
@@ -408,9 +414,15 @@ class AnnealRunnerFin():
                         closslist.append(closs)
 
                     if noarb: 
+                        if sampmethod == 2: 
                         # index = (dloss < dlossthreshold[c]) & (closs < clossthreshold[c])
-                        index = (dloss <= dlossold) & (closs <= clossold)
-                        x_mod[index] = x_prop[index]
+                            index = (dloss <= dlossold) & (closs <= clossold)
+                            # print('indexshape', index.shape)
+                            x_mod[index] = x_prop[index]
+                        elif sampmethod == 3:
+                            u = torch.rand(testsize, device=self.config.device)*1.2
+                            index = np.maximum(dloss/ (dlossold + 0.001), closs/(clossold + 0.001)) <= u  
+                            x_mod[index] = x_prop[index]
                     else: 
                         x_mod = x_prop
                         
@@ -528,6 +540,10 @@ class AnnealRunnerFin():
                 indexlist2 = [(7,x) for x in range(8)] + [(x,7) for x in range(8)]
                 indexlist = indexlist1 + indexlist2
                 for x in indexlist:
+                    mask[x] = False
+            elif mask_choice == "mid4":
+                indexlist =  [(2,2), (2,5), (4,2), (4,5)]
+                for x in indexlist: 
                     mask[x] = False
 
             # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.00002)
