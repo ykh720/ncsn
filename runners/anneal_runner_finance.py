@@ -379,6 +379,11 @@ class AnnealRunnerFin():
         x_mod = x_mod.view(-1, self.config.data.channels, self.config.data.image_size ,self.config.data.image_size)
         # half_refer_image = refer_image[..., :self.config.data.image_size//2]
         testsize = x_mod.shape[0]
+        updateavglist = []
+        d25quantilelist = []
+        d90quantilelist = []
+        c25quantilelist = []
+        c90quantilelist = []
         with torch.no_grad():
             for c, sigma in tqdm.tqdm(enumerate(sigmas), total=len(sigmas), desc="annealed Langevin dynamics sampling inpainting"):
                 labels = torch.ones(x_mod.shape[0], device=x_mod.device) * c
@@ -393,6 +398,7 @@ class AnnealRunnerFin():
                 closslist = []
                 dlossold = 0
                 clossold = 0
+                updatepertlist_pernoise = []
                 for s in range(n_steps_each):
                     images.append(torch.clamp(x_mod, 0.0, 1.0).to('cpu'))
                     noise = torch.randn_like(x_mod) * np.sqrt(step_size * 2)
@@ -421,13 +427,18 @@ class AnnealRunnerFin():
                             x_mod[index] = x_prop[index]
                         elif sampmethod == 3:
                             u = torch.rand(testsize, device=self.config.device)*1.2
-                            index = np.maximum(dloss/ (dlossold + 0.001), closs/(clossold + 0.001)) <= u  
+                            index = torch.maximum(dloss/ (dlossold + 0.001), closs/(clossold + 0.001)) <= u  
                             x_mod[index] = x_prop[index]
                     else: 
                         x_mod = x_prop
-                        
+                    # print(index)
+                    # print(type(index))
+                    updatepert = torch.sum(index) / len(index)
+                    updatepertlist_pernoise.append(updatepert)
+
                     # x_mod[:, :, :, :16] = corrupted_half_image
-                    x_mod[:, :, mask] = refer_image[..., mask]
+                    # noise_mask = torch.randn_like(refer_image) * sigma
+                    x_mod[:, :, mask] = refer_image[..., mask] # + noise_mask[..., mask]
                     # print("class: {}, step_size: {}, mean {}, max {}".format(c, step_size, grad.abs().mean(),
                     #                                                          grad.abs().max()))
 
@@ -438,16 +449,42 @@ class AnnealRunnerFin():
                 print('\n current sigma' , sigma)
                 dloss_thislevel = torch.cat(dlosslist, dim=0)
                 closs_thislevel = torch.cat(closslist, dim=0)
+                # print(dloss_thislevel.shape) # n_steps_each * testsize
+                # updateavg = np.mean(np.array(updatepertlist_pernoise))
+                # print(updatepertlist_pernoise)
+                # updateavg = torch.mean(torch.cat(updatepertlist_pernoise,dim=0))
+                updateavg = torch.mean(torch.tensor(updatepertlist_pernoise))
                 d25quantile = torch.quantile(dloss_thislevel, 0.25)
                 c25quantile = torch.quantile(closs_thislevel, 0.25)
-
+                d90quantile = torch.quantile(dloss_thislevel, 0.90)
+                c90quantile = torch.quantile(closs_thislevel, 0.90)
+                updateavglist.append(updateavg)
+                d25quantilelist.append(d25quantile)
+                c25quantilelist.append(c25quantile)
+                d90quantilelist.append(d90quantile)
+                c90quantilelist.append(c90quantile)
                 print('d25quantile:', d25quantile)
+                print('d90qunatile:', d90quantile)
                 print('c25quantile:', c25quantile)
+                print('c90qunatile:', c90quantile)
+                print('avg update percentage:', updateavg)
                 # print(c) # starts from 0 
 
+            yamldict = {}
+            yamldict['d25quantile'] = [x.item() for x in d25quantilelist]
+            yamldict['d90quantile'] = [x.item() for x in d90quantilelist]
+            yamldict['c25quantile'] = [x.item() for x in c25quantilelist]
+            yamldict['c90quantile'] = [x.item() for x in c90quantilelist]
+            yamldict['updateavg'] = [x.item() for x in updateavglist]
+            yamldict['noise_level'] = [x.item() for x in sigmas]
+
+            import yaml
+            with open(os.path.join(self.args.image_folder, 'sampleresult.yml'), 'w') as f:
+                documents = yaml.dump(yamldict, f)
+            
             return images
 
-    def test_inpainting(self, n_steps_each=100, step_lr=0.00002, batch_size=10, noarb=False, mask_choice="2"):
+    def test_inpainting(self, n_steps_each=100, step_lr=0.00002, batch_size=10, noarb=False, mask_choice="2", sampmethod=2):
         # n_steps_each number of steps for sampling in each noise level
         # step_lr learning rate for each step
         # batch_size is actually the number of test samples to be considered 
@@ -546,9 +583,29 @@ class AnnealRunnerFin():
                 for x in indexlist: 
                     mask[x] = False
 
+            import yaml 
+            newdict = self.config
+            newdict.sampling = "for sampling"
+            newdict.noarb = noarb
+            # newdict.sampling.n_steps_each = n_steps_each
+            # newdict.sampling.step_lr = step_lr
+            # newdict.sampling.mask_choice = mask_choice
+            # newdict.sampling.testsize = batch_size
+            # newdict.sampling.sampmethod = sampmethod
+            newdict.n_steps_each = n_steps_each
+            newdict.step_lr = step_lr
+            newdict.mask_choice = mask_choice
+            newdict.testsize = batch_size
+            newdict.sampmethod = sampmethod
+
+            with open(os.path.join(self.args.image_folder, 'config.yml'), 'w') as f:
+                documents = yaml.dump(newdict, f)
+            
+
             # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.00002)
             # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.000008)
-            all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, n_steps_each, step_lr, noarb)
+            all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, n_steps_each, step_lr, noarb, sampmethod)
+
 
             # torch.save(refer_image, os.path.join(self.args.image_folder, 'refer_image.pth'))
 
@@ -575,7 +632,7 @@ class AnnealRunnerFin():
                     im = Image.fromarray(image_grid.mul_(255).add_(0.5).clamp_(0, 255).permute(1, 2, 0).to('cpu', torch.uint8).numpy())
                     imgs.append(im)
 
-                save_image(image_grid, os.path.join(self.args.image_folder, 'image_completion_{}.png'.format(i)))
+                # save_image(image_grid, os.path.join(self.args.image_folder, 'image_completion_{}.png'.format(i)))
                 
                 if batch_size ==1:
                     savepath = os.path.join(self.args.image_folder, 'ivs_image_inpainting{}.png'.format(i))
@@ -589,27 +646,30 @@ class AnnealRunnerFin():
                         savepath2 = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
                         inpainting_error(refer_image.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(),
                              sample.reshape((batch_size**2, self.config.data.image_size,self.config.data.image_size)).cpu(),
-                               Klist, tlist, savepath2, )
+                               Klist, tlist, savepath2, mask)
                 else: # batch_size == 10  
                     if i > n_steps_each * self.config.model.num_classes - 10: 
                         if self.config.data.scale:
                             savepath = os.path.join(self.args.image_folder, 'totalvar_image_inpainting{}.png'.format(i))
                             IVS_visualize(sample[0].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = str(i) + "step_inpainting")
                             savepath2 = os.path.join(self.args.image_folder, 'totalvar_error_inpainting{}.png'.format(i))
+                            savepathyml2 = os.path.join(self.args.image_folder, 'totalvar_error_inpainting{}.yml'.format(i))
                             inpainting_error(refer_image.reshape((batch_size, width,width)).cpu(),
-                                            sample.reshape((batch_size, width,width)).cpu(), Klist, tlist, savepath2, )
+                                            sample.reshape((batch_size, width,width)).cpu(), Klist, tlist, savepath2, mask, savepathyml2)
                             savepath3 = os.path.join(self.args.image_folder, 'ivs_image_inpainting{}.png'.format(i))
                             IVS_visualize(sample_unscaled[0].reshape((width,width)), Klist, tlist, savepath=savepath3, plotname = str(i) + "step_inpainting")
                             savepath4 = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
+                            savepathyml4 = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.yml'.format(i))
                             inpainting_error(refer_image_unscaled.reshape((batch_size, width,width)).cpu(),
-                                            sample_unscaled.reshape((batch_size, width,width)).cpu(), Klist, tlist, savepath4, )
+                                            sample_unscaled.reshape((batch_size, width,width)).cpu(), Klist, tlist, savepath4, mask, savepathyml4)
                             
                         else:
                             savepath = os.path.join(self.args.image_folder, 'ivs_image_inpainting{}.png'.format(i))
                             IVS_visualize(sample[0].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = str(i) + "step_inpainting")
                             savepath2 = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
+                            savepathyml = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.yml'.format(i))
                             inpainting_error(refer_image.reshape((batch_size, width,width)).cpu(),
-                                            sample.reshape((batch_size, width,width)).cpu(), Klist, tlist, savepath2, )
+                                            sample.reshape((batch_size, width,width)).cpu(), Klist, tlist, savepath2, mask, savepathyml)
                         # a = sample.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu()
                         # b = refer_image.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu()
                         # print(torch.sum(torch.abs(a-b), dim=(0,1,2)))

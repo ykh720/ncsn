@@ -131,9 +131,9 @@ def main():
             #### Change is made in here!
             if args.inpainting:
                 if args.noarb:
-                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, True, args.mask)
+                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, True, args.mask, args.sampmethod)
                 else:
-                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, False, args.mask)
+                    runner.test_inpainting(args.n_steps_each, args.step_lr, args.testsize, False, args.mask, args.sampmethod)
             else:
                 runner.test()
     except:

@@ -51,18 +51,27 @@ def IVS_visualize(gen_row, Klist, tlist, savepath,   plotname = "",):
 
     # return Z 
 
-def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
+def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath):
     """surfivs shape (batch_size, image_size_y, image_size_x)"""
     from matplotlib.ticker import FormatStrFormatter, StrMethodFormatter
     import matplotlib.pyplot as plt
     import matplotlib.ticker as mtick
     import torch
+    import numpy as np 
+
+    indices = np.nonzero(~mask)
+    indices = indices.tolist()
+    indices = [tuple(x) for x in indices]
+    # avgerror = [] 
+    # stderror = []
+
     plt.figure(1,figsize=(14,4))
     ax=plt.subplot(1,3,1)
     # err = np.mean(100 * np.abs((surfivspred - surfivs)/ surfivs), axis =0) 
     # print(surfivs.shape)
     # print(surfivspred.shape)
     err = torch.mean(100 * torch.abs((surfivspred - surfivs)/ surfivs), dim =0) 
+    avgerror = [err[x].item() for x in indices]
     # print(torch.max(err)[0])
     # print(err.shape)
     # print(err)
@@ -87,6 +96,7 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     err = 100*torch.std(torch.abs((surfivspred-surfivs)/surfivs),dim = 0)
     # print(torch.max(err)[0])
     # print(err.shape)
+    stderror = [err[x].item() for x in indices]
 
     plt.title("Std relative error",fontsize=15,y=1.04)
     plt.imshow(err.reshape(len(tlist),len(Klist)))
@@ -103,6 +113,7 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     err = 100*torch.max(torch.abs((surfivspred-surfivs)/surfivs),dim = 0)[0]
     # print(torch.max(err)[0])
     # print(err.shape)
+    maxerror = [err[x].item() for x in indices]
 
     plt.title("Maximum relative error",fontsize=15,y=1.04)
     plt.imshow(err.reshape(len(tlist),len(Klist)))
@@ -116,9 +127,23 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, ):
     plt.tight_layout()
     plt.savefig(savepath, dpi=300)
     
+    # print(err)
+
     # not sure
     plt.close()
     plt.show()
+    print('avg', avgerror)
+
+    dictyml = {}
+    dictyml['indices'] = indices
+    dictyml['avgerror'] = avgerror
+    dictyml['stderror'] = stderror
+    dictyml['maxerror'] = maxerror
+    import yaml
+    with open(ymlpath, 'w') as f:
+        documents = yaml.dump(dictyml, f)
+
+    return indices, avgerror, stderror, maxerror
 
 def tf_diff_axis_0(a):
     return a[1:]-a[:-1]
