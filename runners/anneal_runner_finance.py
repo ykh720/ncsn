@@ -19,6 +19,7 @@ from torchvision.utils import save_image, make_grid
 from PIL import Image
 import scipy.io 
 from sklearn.model_selection import train_test_split
+import argparse
 
 
 
@@ -585,18 +586,26 @@ class AnnealRunnerFin():
 
             import yaml 
             newdict = self.config
-            newdict.sampling = "for sampling"
-            newdict.noarb = noarb
+            newdict.sampling = argparse.Namespace()
             # newdict.sampling.n_steps_each = n_steps_each
             # newdict.sampling.step_lr = step_lr
             # newdict.sampling.mask_choice = mask_choice
             # newdict.sampling.testsize = batch_size
             # newdict.sampling.sampmethod = sampmethod
-            newdict.n_steps_each = n_steps_each
-            newdict.step_lr = step_lr
-            newdict.mask_choice = mask_choice
-            newdict.testsize = batch_size
-            newdict.sampmethod = sampmethod
+
+            setattr(newdict.sampling, 'noarb', noarb)
+            setattr(newdict.sampling, 'n_steps_each', n_steps_each)
+            setattr(newdict.sampling, 'step_lr', step_lr)
+            setattr(newdict.sampling, 'mask_choice', mask_choice)
+            setattr(newdict.sampling, 'testsize', batch_size)
+            setattr(newdict.sampling, 'sampmethod', sampmethod)
+
+            # newdict.noarb = noarb
+            # newdict.n_steps_each = n_steps_each
+            # newdict.step_lr = step_lr
+            # newdict.mask_choice = mask_choice
+            # newdict.testsize = batch_size
+            # newdict.sampmethod = sampmethod
 
             with open(os.path.join(self.args.image_folder, 'config.yml'), 'w') as f:
                 documents = yaml.dump(newdict, f)

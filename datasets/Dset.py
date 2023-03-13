@@ -132,7 +132,7 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     # not sure
     plt.close()
     plt.show()
-    print('avg', avgerror)
+    # print('avg', avgerror)
 
     dictyml = {}
     dictyml['indices'] = indices
