@@ -143,6 +143,8 @@ def sliced_score_estimation_vr(score_net, samples, n_particles=1):
 
 
 def anneal_sliced_score_estimation_vr(scorenet, samples, labels, sigmas, n_particles=1):
+    # n_particles refer to the M in (3.7) in the phd thesis
+    
     used_sigmas = sigmas[labels].view(samples.shape[0], *([1] * len(samples.shape[1:])))
     perturbed_samples = samples + torch.randn_like(samples) * used_sigmas
     dup_samples = perturbed_samples.unsqueeze(0).expand(n_particles, *samples.shape).contiguous().view(-1,
@@ -152,7 +154,11 @@ def anneal_sliced_score_estimation_vr(scorenet, samples, labels, sigmas, n_parti
     dup_samples.requires_grad_(True)
 
     # use Rademacher
+    
+    # the current one is actually just multivariate normal
     vectors = torch.randn_like(dup_samples)
+
+    # The below codes are actually an implementation of Algo 3.1 in phd thesis
 
     grad1 = scorenet(dup_samples, dup_labels)
     gradv = torch.sum(grad1 * vectors)
@@ -166,6 +172,7 @@ def anneal_sliced_score_estimation_vr(scorenet, samples, labels, sigmas, n_parti
     loss1 = loss1.view(n_particles, -1).mean(dim=0)
     loss2 = loss2.view(n_particles, -1).mean(dim=0)
 
-    loss = (loss1 + loss2) * (used_sigmas.squeeze() ** 2)
+    loss = (loss1 + loss2) * (used_sigmas.squeeze() ** 2) 
+    # the loss is actually scaled by noise
 
     return loss.mean(dim=0)

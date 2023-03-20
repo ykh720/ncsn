@@ -124,6 +124,44 @@ class AnnealRunnerFin():
         # for sigma_begin = 1, sigma_end = 0.001
         # n = 15 (after round up to nearest integer)
 
+        # if self.config.training.log_all_sigmas:
+        if False:
+            ### Commented out training time logging to save time.
+            test_loss_per_sigma = [None for _ in range(len(sigmas))]
+
+            def hook(loss, labels):
+                # for i in range(len(sigmas)):
+                #     if torch.any(labels == i):
+                #         test_loss_per_sigma[i] = torch.mean(loss[labels == i])
+                pass
+
+            def tb_hook():
+                # for i in range(len(sigmas)):
+                #     if test_loss_per_sigma[i] is not None:
+                #         tb_logger.add_scalar('test_loss_sigma_{}'.format(i), test_loss_per_sigma[i],
+                #                              global_step=step)
+                pass
+
+            def test_hook(loss, labels):
+                for i in range(len(sigmas)):
+                    if torch.any(labels == i):
+                        test_loss_per_sigma[i] = torch.mean(loss[labels == i])
+
+            def test_tb_hook():
+                for i in range(len(sigmas)):
+                    if test_loss_per_sigma[i] is not None:
+                        tb_logger.add_scalar('test_loss_sigma_{}'.format(i), test_loss_per_sigma[i],
+                                             global_step=step)
+
+        else:
+            hook = test_hook = None
+
+            def tb_hook():
+                pass
+
+            def test_tb_hook():
+                pass
+
         for epoch in range(self.config.training.n_epochs):
             for i, X in enumerate(dataloader):
                 step += 1
@@ -140,7 +178,11 @@ class AnnealRunnerFin():
 
                 labels = torch.randint(0, len(sigmas), (X.shape[0],), device=X.device)
                 if self.config.training.algo == 'dsm':
-                    loss = anneal_dsm_score_estimation(score, X, labels, sigmas, self.config.training.anneal_power)
+                    # loss = anneal_dsm_score_estimation(score, X, labels, sigmas, self.config.training.anneal_power)
+                    loss = anneal_dsm_score_estimation(score, X, sigmas, None,
+                                                   self.config.training.anneal_power,
+                                                   hook)
+
                 elif self.config.training.algo == 'ssm':
                     loss = anneal_sliced_score_estimation_vr(score, X, labels, sigmas,
                                                              n_particles=self.config.training.n_particles)
@@ -172,8 +214,9 @@ class AnnealRunnerFin():
                     test_labels = torch.randint(0, len(sigmas), (test_X.shape[0],), device=test_X.device)
 
                     with torch.no_grad():
-                        test_dsm_loss = anneal_dsm_score_estimation(score, test_X, test_labels, sigmas,
-                                                                    self.config.training.anneal_power)
+                        # test_dsm_loss = anneal_dsm_score_estimation(score, test_X, test_labels, sigmas,
+                                                                    # self.config.training.anneal_power)
+                        test_dsm_loss = anneal_dsm_score_estimation(score, test_X, sigmas, labels=None, anneal_power=self.config.training.anneal_power, hook=hook)
 
                     tb_logger.add_scalar('test_dsm_loss', test_dsm_loss, global_step=step)
 
@@ -181,6 +224,8 @@ class AnnealRunnerFin():
                     states = [
                         score.state_dict(),
                         optimizer.state_dict(),
+                        epoch,
+                        step,
                     ]
                     torch.save(states, os.path.join(self.args.log, 'checkpoint_{}.pth'.format(step)))
                     torch.save(states, os.path.join(self.args.log, 'checkpoint.pth'))
