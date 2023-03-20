@@ -185,7 +185,7 @@ class AnnealRunnerFin():
 
                 elif self.config.training.algo == 'ssm':
                     loss = anneal_sliced_score_estimation_vr(score, X, labels, sigmas,
-                                                             n_particles=self.config.training.n_particles)
+                                                             n_particles=1) # self.config.training.n_particles)
 
                 optimizer.zero_grad()
                 loss.backward()
