@@ -1,0 +1,39 @@
+!!python/object:argparse.Namespace
+data: !!python/object:argparse.Namespace
+  channels: 1
+  dataset: Finance
+  datasetpath: HestonIVSgrid_NI.mat
+  finname: Heston
+  image_size: 8
+  logit_transform: false
+  random_flip: false
+  scale: false
+device: !!python/object/apply:torch.device
+- cuda
+model: !!python/object:argparse.Namespace
+  batch_norm: false
+  ngf: 8
+  num_classes: 10
+  sigma_begin: 1
+  sigma_end: 0.01
+optim: !!python/object:argparse.Namespace
+  amsgrad: false
+  beta1: 0.9
+  lr: 0.001
+  optimizer: Adam
+  weight_decay: 0.0
+sampling: !!python/object:argparse.Namespace
+  mask_choice: random30
+  n_steps_each: 100
+  noarb: true
+  sampmethod: 3
+  step_lr: 2.0e-05
+  testsize: 100
+training: !!python/object:argparse.Namespace
+  algo: dsm
+  anneal_power: 2.0
+  batch_size: 128
+  n_epochs: 45000
+  n_iters: 12001
+  ngpu: 1
+  snapshot_freq: 4000

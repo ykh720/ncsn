@@ -59,15 +59,15 @@ class AnnealRunnerFin():
         # totalvarsurface = scipy.io.loadmat('HestonIVSgrid_NI25652.mat')
         totalvarsurface = scipy.io.loadmat(self.config.data.datasetpath)
         totalvarsurface = totalvarsurface['HestonIVS2D']
-
+        datasetsize = totalvarsurface.shape[0]
         if self.config.data.scale:
             # if scale is true, we use total implied variance instead! 
 
-            tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
+            tlist = scipy.io.loadmat(self.config.data.finname + '_tlist' + str(datasetsize) + '.mat')
             tlist = tlist['tlist'] # note that they are 2D array 
             tlist = tlist.reshape((-1))
             # Klist = scipy.io.loadmat('msft_Klist.mat')
-            Klist = scipy.io.loadmat(self.config.data.finname + '_Klist.mat')
+            Klist = scipy.io.loadmat(self.config.data.finname + '_Klist'+ str(datasetsize)+'.mat')
             Klist = Klist['Klist'] # note that they are 2D array
             Klist = Klist.reshape((-1))
             tlist_broadcast = tlist.reshape((1, len(tlist), 1))
@@ -277,12 +277,16 @@ class AnnealRunnerFin():
         score = torch.nn.DataParallel(score)
         # print(self.config)
         # tlist = scipy.io.loadmat('msft_tlist.mat')
-        tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
+
+        string1 = self.config.data.datasetpath.split("HestonIVSgrid_NI")[1]
+        datasetsizestr = string1.split('.mat')[0]
+
+        tlist = scipy.io.loadmat(self.config.data.finname + '_tlist' + datasetsizestr + '.mat')
         tlist = tlist['tlist'] # note that they are 2D array 
         tlist = tlist.reshape((-1))
         tlist_broadcast = tlist.reshape((1, len(tlist), 1))
         # Klist = scipy.io.loadmat('msft_Klist.mat')
-        Klist = scipy.io.loadmat(self.config.data.finname + '_Klist.mat')
+        Klist = scipy.io.loadmat(self.config.data.finname + '_Klist' + datasetsizestr + '.mat')
         Klist = Klist['Klist'] # note that they are 2D array
         Klist = Klist.reshape((-1))
 
@@ -400,12 +404,16 @@ class AnnealRunnerFin():
                                             step_lr=0.000008, noarb = False, sampmethod=2):
         
         print('noarbitrage sampling:', noarb)
-        tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
+
+        string1 = self.config.data.datasetpath.split("HestonIVSgrid_NI")[1]
+        datasetsizestr = string1.split('.mat')[0]
+        
+        tlist = scipy.io.loadmat(self.config.data.finname + '_tlist' + datasetsizestr + '.mat')
         tlist = tlist['tlist'] # note that they are 2D array 
         tlist = tlist.reshape((-1))
         tlist_broadcast = tlist.reshape((1, len(tlist), 1))
         # Klist = scipy.io.loadmat('msft_Klist.mat')
-        Klist = scipy.io.loadmat(self.config.data.finname + '_Klist.mat')
+        Klist = scipy.io.loadmat(self.config.data.finname + '_Klist' + datasetsizestr + '.mat')
         Klist = Klist['Klist'] # note that they are 2D array
         Klist = Klist.reshape((-1))
         # note that S0 = 100
@@ -554,12 +562,16 @@ class AnnealRunnerFin():
         
         if self.config.data.dataset == 'Finance':
             # tlist = scipy.io.loadmat('msft_tlist.mat')
-            tlist = scipy.io.loadmat(self.config.data.finname + '_tlist.mat')
+
+            string1 = self.config.data.datasetpath.split("HestonIVSgrid_NI")[1]
+            datasetsizestr = string1.split('.mat')[0]
+            
+            tlist = scipy.io.loadmat(self.config.data.finname + '_tlist' + datasetsizestr + '.mat')
             tlist = tlist['tlist'] # note that they are 2D array 
             tlist = tlist.reshape((-1))
             tlist_broadcast = tlist.reshape((1, len(tlist), 1))
             # Klist = scipy.io.loadmat('msft_Klist.mat')
-            Klist = scipy.io.loadmat(self.config.data.finname + '_Klist.mat')
+            Klist = scipy.io.loadmat(self.config.data.finname + '_Klist' + datasetsizestr + '.mat')
             Klist = Klist['Klist'] # note that they are 2D array
             Klist = Klist.reshape((-1))
 
