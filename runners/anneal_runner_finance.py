@@ -20,7 +20,7 @@ from PIL import Image
 import scipy.io 
 from sklearn.model_selection import train_test_split
 import argparse
-
+import random
 
 
 # what's the use of this?
@@ -628,6 +628,26 @@ class AnnealRunnerFin():
                 indexlist =  [(2,2), (2,5), (4,2), (4,5)]
                 for x in indexlist: 
                     mask[x] = False
+            elif mask_choice == "random10": # 10 for around 10% of the points are randomly blackened
+                numBpts = int(np.floor(0.1 * self.config.data.image_size **2))
+                indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
+                indexlist = random.sample(indexlist, numBpts)
+                for x in indexlist: 
+                    mask[x] = False
+            elif mask_choice == "random20": # 10 for around 10% of the points are randomly blackened
+                numBpts = int(np.floor(0.2 * self.config.data.image_size **2))
+                indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
+                indexlist = random.sample(indexlist, numBpts)
+                for x in indexlist: 
+                    mask[x] = False
+            elif mask_choice == "random30": # 10 for around 10% of the points are randomly blackened
+                numBpts = int(np.floor(0.3 * self.config.data.image_size **2))
+                indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
+                indexlist = random.sample(indexlist, numBpts)
+                for x in indexlist: 
+                    mask[x] = False
+
+
 
             import yaml 
             newdict = self.config
