@@ -640,6 +640,12 @@ class AnnealRunnerFin():
                 indexlist =  [(2,2), (2,5), (4,2), (4,5)]
                 for x in indexlist: 
                     mask[x] = False
+            elif mask_choice == "mid4v2":
+                i_d = int(np.ceil(self.config.data.image_size/4)) # i_d for indexdist
+                indexlist = [(i_d, i_d), (i_d, -i_d-1), (-i_d-1, i_d), (-i_d-1,-i_d-1)]
+                # print('Hi!!!!!!', i_d)
+                for x in indexlist: 
+                    mask[x] = False
             elif mask_choice == "random10": # 10 for around 10% of the points are randomly blackened
                 numBpts = int(np.floor(0.1 * self.config.data.image_size **2))
                 indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
