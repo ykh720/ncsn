@@ -590,7 +590,7 @@ class AnnealRunnerFin():
             # batch_size = 10
             # batch_size = 1282 # all data in IVStest
             # batch_size = 2
-            dataloader = DataLoader(dataset, batch_size=batch_size,shuffle=True, drop_last=True)
+            dataloader = DataLoader(dataset, batch_size=batch_size,shuffle=False, drop_last=True)
             # we use test dataset, use the same variable dataloader to avoid codes changes 
 
             refer_image = next(iter(dataloader))
