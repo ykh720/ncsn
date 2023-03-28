@@ -758,7 +758,7 @@ class AnnealRunnerFin():
                         else:
                             savepath = os.path.join(self.args.image_folder, 'ivs_image_inpainting{}.png'.format(i))
                             # IVS_visualize(sample[0].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = str(i) + "step_inpainting")
-                            IVS_visualize(sample[1].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = str(i) + "step_inpainting")
+                            IVS_visualize(sample[81].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = str(i) + "step_inpainting")
 
                             savepath2 = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.png'.format(i))
                             savepathyml = os.path.join(self.args.image_folder, 'ivs_error_inpainting{}.yml'.format(i))
