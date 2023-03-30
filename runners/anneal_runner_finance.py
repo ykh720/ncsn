@@ -664,8 +664,42 @@ class AnnealRunnerFin():
                 indexlist = random.sample(indexlist, numBpts)
                 for x in indexlist: 
                     mask[x] = False
-
-
+            elif mask_choice == "random40": # 10 for around 10% of the points are randomly blackened
+                numBpts = int(np.floor(0.4 * self.config.data.image_size **2))
+                indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
+                indexlist = random.sample(indexlist, numBpts)
+                for x in indexlist: 
+                    mask[x] = False
+            elif mask_choice == "random50": # 10 for around 10% of the points are randomly blackened
+                numBpts = int(np.floor(0.5 * self.config.data.image_size **2))
+                indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
+                indexlist = random.sample(indexlist, numBpts)
+                for x in indexlist: 
+                    mask[x] = False
+            elif mask_choice == "random60": # 10 for around 10% of the points are randomly blackened
+                numBpts = int(np.floor(0.6 * self.config.data.image_size **2))
+                indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
+                indexlist = random.sample(indexlist, numBpts)
+                for x in indexlist: 
+                    mask[x] = False
+            elif mask_choice == "random70": # 10 for around 10% of the points are randomly blackened
+                numBpts = int(np.floor(0.7 * self.config.data.image_size **2))
+                indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
+                indexlist = random.sample(indexlist, numBpts)
+                for x in indexlist: 
+                    mask[x] = False
+            elif mask_choice == "random80": # 10 for around 10% of the points are randomly blackened
+                numBpts = int(np.floor(0.8 * self.config.data.image_size **2))
+                indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
+                indexlist = random.sample(indexlist, numBpts)
+                for x in indexlist: 
+                    mask[x] = False
+            elif mask_choice == "random90": # 10 for around 10% of the points are randomly blackened
+                numBpts = int(np.floor(0.9 * self.config.data.image_size **2))
+                indexlist = [(i,j) for i in range(self.config.data.image_size) for j in range(self.config.data.image_size)]
+                indexlist = random.sample(indexlist, numBpts)
+                for x in indexlist: 
+                    mask[x] = False
 
             import yaml 
             newdict = self.config
