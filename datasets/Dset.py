@@ -204,3 +204,37 @@ def calloss_torch(y_true, y_pred, tlist, loss_multiplier=1):
     Ngrid = y_true.shape[1] * y_true.shape[2]
     return loss_multiplier * loss / Ngrid
 
+
+
+import yaml
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def plot_sampleresult(file_name, output_folder='sampleresultPlot'):
+    # Load data from YAML file
+    with open(file_name, 'r') as f:
+        data = yaml.safe_load(f)
+
+    # Create the output folder if it doesn't exist
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # Define variables to plot
+    variables = ['c25quantile', 'c90quantile', 'd25quantile', 'd90quantile', 'updateavg']
+    noise_level_log = np.log10(data['noise_level'])
+
+    # Plot and save figures
+    for variable in variables:
+        plt.figure()
+        plt.plot(noise_level_log, data[variable], marker='o')
+        plt.xlabel('log10(Noise Level)')
+        plt.ylabel(variable)
+
+        plt.title(f'{variable} vs log10(Noise Level)')
+        plt.gca().invert_xaxis()  # Invert the x-axis
+        plt.savefig(os.path.join(output_folder, f'{variable}_vs_noise_level.png'))
+        # plt.show()
+
+# Usage:
+# plot_sampleresult('sampleresult.yml')

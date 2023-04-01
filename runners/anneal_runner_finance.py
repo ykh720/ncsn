@@ -401,7 +401,8 @@ class AnnealRunnerFin():
         # imgs[0].save(os.path.join(self.args.image_folder, "movie.gif"), save_all=True, append_images=imgs[1:], duration=1, loop=0)
 
     def anneal_Langevin_dynamics_inpainting(self, x_mod, refer_image, scorenet, sigmas, mask, n_steps_each=100,
-                                            step_lr=0.000008, noarb = False, sampmethod=2):
+                                            step_lr=0.000008, noarb = False, sampmethod=2, samplenoise=False, samplenoiselast=False, samplenoise_noshowing=False,
+                                             denoising_step=True):
         
         print('noarbitrage sampling:', noarb)
 
@@ -454,7 +455,21 @@ class AnnealRunnerFin():
                 clossold = 0
                 updatepertlist_pernoise = []
                 for s in range(n_steps_each):
+                    
+                    if samplenoiselast == True:
+                        noise_mask = torch.randn_like(refer_image) * sigma
+                        x_mod[:, :, mask] = refer_image[..., mask]  + noise_mask[..., mask]
+                        
+                    
                     images.append(torch.clamp(x_mod, 0.0, 1.0).to('cpu'))
+
+                    if samplenoiselast == True:
+                        x_mod[:,:, mask] = refer_image[..., mask] 
+
+                    if samplenoise_noshowing == True:
+                        noise_mask = torch.randn_like(refer_image) * sigma
+                        x_mod[:, :, mask] = refer_image[..., mask]  + noise_mask[..., mask]
+
                     noise = torch.randn_like(x_mod) * np.sqrt(step_size * 2)
                     grad = scorenet(x_mod, labels)
 
@@ -491,8 +506,14 @@ class AnnealRunnerFin():
                     updatepertlist_pernoise.append(updatepert)
 
                     # x_mod[:, :, :, :16] = corrupted_half_image
+                    
+                    if samplenoise == False:
                     # noise_mask = torch.randn_like(refer_image) * sigma
-                    x_mod[:, :, mask] = refer_image[..., mask] # + noise_mask[..., mask]
+                        x_mod[:, :, mask] = refer_image[..., mask] # + noise_mask[..., mask]
+                    else: 
+                        noise_mask = torch.randn_like(refer_image) * sigma
+                        x_mod[:, :, mask] = refer_image[..., mask]  + noise_mask[..., mask]
+
                     # print("class: {}, step_size: {}, mean {}, max {}".format(c, step_size, grad.abs().mean(),
                     #                                                          grad.abs().max()))
 
@@ -532,13 +553,24 @@ class AnnealRunnerFin():
             yamldict['updateavg'] = [x.item() for x in updateavglist]
             yamldict['noise_level'] = [x.item() for x in sigmas]
 
+            if denoising_step == True:
+                last_noise = (len(sigmas) - 1) * torch.ones(x_mod.shape[0], device=x_mod.device)
+                last_noise = last_noise.long()
+                x_mod = x_mod + sigmas[-1] ** 2 * scorenet(x_mod, last_noise)
+                # for only showing the inpainting points
+                x_mod[:, :, mask] = refer_image[..., mask]
+                images.append(x_mod.to('cpu'))
+
             import yaml
             with open(os.path.join(self.args.image_folder, 'sampleresult.yml'), 'w') as f:
                 documents = yaml.dump(yamldict, f)
+
+            sampleresultoutputfolder = os.path.join(self.args.image_folder, 'sampleresultPlot')
+            plot_sampleresult(os.path.join(self.args.image_folder, 'sampleresult.yml'), sampleresultoutputfolder)
             
             return images
 
-    def test_inpainting(self, n_steps_each=100, step_lr=0.00002, batch_size=10, noarb=False, mask_choice="2", sampmethod=2):
+    def test_inpainting(self, n_steps_each=100, step_lr=0.00002, batch_size=10, noarb=False, mask_choice="2", sampmethod=2, denoising_step=True):
         # n_steps_each number of steps for sampling in each noise level
         # step_lr learning rate for each step
         # batch_size is actually the number of test samples to be considered 
@@ -732,6 +764,9 @@ class AnnealRunnerFin():
             # all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, 100, 0.000008)
             all_samples = self.anneal_Langevin_dynamics_inpainting(samples, refer_image, score, sigmas, mask, n_steps_each, step_lr, noarb, sampmethod)
 
+            if denoising_step:
+                denoised_sample = all_samples[-1]
+                all_samples = all_samples[:-1]
 
             # torch.save(refer_image, os.path.join(self.args.image_folder, 'refer_image.pth'))
 
@@ -810,6 +845,17 @@ class AnnealRunnerFin():
                 #                          sample.reshape((batch_size, self.config.data.image_size,self.config.data.image_size)).cpu(), Klist, tlist, savepath, )
                 
                 # torch.save(sample, os.path.join(self.args.image_folder, 'image_completion_raw_{}.pth'.format(i)))
+            if denoising_step:
+                ## assume not scaled 
+                if not self.config.data.scale:
+                    savepath = os.path.join(self.args.image_folder, 'ivs_image_inpainting_denoised.png')
+                    # IVS_visualize(denoised_sample[0].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = str(i) + "step_inpainting")
+                    IVS_visualize(denoised_sample[81].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = "Denoised " + str(i) + "step_inpainting")
+
+                    savepath2 = os.path.join(self.args.image_folder, 'ivs_error_inpainting_denoised.png')
+                    savepathyml = os.path.join(self.args.image_folder, 'ivs_error_inpainting_denoised.yml')
+                    inpainting_error(refer_image.reshape((batch_size, width,width)).cpu(),
+                                    denoised_sample.reshape((batch_size, width,width)).cpu(), Klist, tlist, savepath2, mask, savepathyml)
         
         elif self.config.data.dataset == 'CELEBA':
             dataset = CelebA(root=os.path.join(self.args.run, 'datasets', 'celeba'), split='test',
