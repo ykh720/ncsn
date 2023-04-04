@@ -235,6 +235,7 @@ def plot_sampleresult(file_name, output_folder='sampleresultPlot'):
         plt.gca().invert_xaxis()  # Invert the x-axis
         plt.savefig(os.path.join(output_folder, f'{variable}_vs_noise_level.png'))
         # plt.show()
+        plt.close()
 
 # Usage:
 # plot_sampleresult('sampleresult.yml')
