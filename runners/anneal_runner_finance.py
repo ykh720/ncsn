@@ -475,6 +475,11 @@ class AnnealRunnerFin():
 
                     # print(x_mod.shape)
                     x_prop = x_mod + step_size * grad + noise
+                    
+                    #### 04-16 update
+                    # x_prop[:, :, mask] = refer_image[..., mask]
+                    #### 04-16 update 
+
 
                     if self.config.data.scale:
                         dloss = Dcondloss_torch(torch.squeeze(x_prop), torch.squeeze(x_prop), logmlist) # .unsqueeze(0)
@@ -500,6 +505,9 @@ class AnnealRunnerFin():
                             x_mod[index] = x_prop[index]
                     else: 
                         x_mod = x_prop
+                        index = torch.ones(1) 
+                        # just a dummy for the case of no noarb so that the following code can run smoothly
+                        
                     # print(index)
                     # print(type(index))
                     updatepert = torch.sum(index) / len(index)
