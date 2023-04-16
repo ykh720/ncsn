@@ -53,6 +53,11 @@ def IVS_visualize(gen_row, Klist, tlist, savepath,   plotname = "",):
 
 def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath):
     """surfivs shape (batch_size, image_size_y, image_size_x)"""
+
+    def rotate_xticklabels(ax, angle):
+        for tick in ax.get_xticklabels():
+            tick.set_rotation(angle)
+
     from matplotlib.ticker import FormatStrFormatter, StrMethodFormatter
     import matplotlib.pyplot as plt
     import matplotlib.ticker as mtick
@@ -90,6 +95,7 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     # plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}'))
     plt.xlabel("Strike",fontsize=15,labelpad=5)
     plt.ylabel("Maturity",fontsize=15,labelpad=5)
+    rotate_xticklabels(ax, 45)
 
     ax=plt.subplot(1,3,2)
     # err = 100*np.std(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
@@ -107,6 +113,7 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     ax.set_yticklabels([str(round(t,2)) for t in tlist])
     plt.xlabel("Strike",fontsize=15,labelpad=5)
     plt.ylabel("Maturity",fontsize=15,labelpad=5)
+    rotate_xticklabels(ax, 45)
 
     ax=plt.subplot(1,3,3)
     # err = 100*np.max(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
@@ -124,6 +131,8 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     ax.set_yticklabels([str(round(t,2)) for t in tlist])
     plt.xlabel("Strike",fontsize=15,labelpad=5)
     plt.ylabel("Maturity",fontsize=15,labelpad=5)
+    rotate_xticklabels(ax, 45)
+    
     plt.tight_layout()
     plt.savefig(savepath, dpi=300)
     
