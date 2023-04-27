@@ -44,6 +44,10 @@ def IVS_visualize(gen_row, Klist, tlist, savepath,   plotname = "",):
     ax.set_ylabel('Time to Maturity')
     ax.set_zlabel('Implied volatility')
 
+    #### 04-27
+    # Invert the x-axis
+    ax.set_xlim(ax.get_xlim()[::-1])
+
     ax.set_title(plotname + ' IVS')
     plt.savefig(savepath)
     plt.close()
@@ -81,7 +85,11 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     # print(err.shape)
     # print(err)
     plt.title("Average relative error",fontsize=15,y=1.04)
-    plt.imshow(err.reshape(len(tlist),len(Klist)))
+    # plt.imshow(err.reshape(len(tlist),len(Klist)))
+
+    ### 04-27
+    plt.imshow(err.reshape(len(tlist),len(Klist)),origin='lower')
+
     plt.colorbar(format=mtick.PercentFormatter())
 
     ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
@@ -89,6 +97,7 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
 
     # ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
     ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
+    # ax.set_yticklabels([str(round(t,2)) for t in tlist][::-1])
     ax.set_yticklabels([str(round(t,2)) for t in tlist])
     # ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     # ax.yaxis.set_major_formatter('{x:9<5.1f}')
@@ -105,11 +114,13 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     stderror = [err[x].item() for x in indices]
 
     plt.title("Std relative error",fontsize=15,y=1.04)
-    plt.imshow(err.reshape(len(tlist),len(Klist)))
+    # origin='lower' 04-27 update
+    plt.imshow(err.reshape(len(tlist),len(Klist)),origin='lower')
     plt.colorbar(format=mtick.PercentFormatter())
     ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
     ax.set_xticklabels(Klist.astype('int'))
     ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
+    # ax.set_yticklabels([str(round(t,2)) for t in tlist][::-1])
     ax.set_yticklabels([str(round(t,2)) for t in tlist])
     plt.xlabel("Strike",fontsize=15,labelpad=5)
     plt.ylabel("Maturity",fontsize=15,labelpad=5)
@@ -123,12 +134,15 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     maxerror = [err[x].item() for x in indices]
 
     plt.title("Maximum relative error",fontsize=15,y=1.04)
-    plt.imshow(err.reshape(len(tlist),len(Klist)))
+    ## origin='lower' 04-27 update
+    plt.imshow(err.reshape(len(tlist),len(Klist)),origin='lower')
     plt.colorbar(format=mtick.PercentFormatter())
     ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
     ax.set_xticklabels(Klist.astype('int'))
     ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
     ax.set_yticklabels([str(round(t,2)) for t in tlist])
+    # ax.set_yticklabels([str(round(t,2)) for t in tlist][::-1])
+
     plt.xlabel("Strike",fontsize=15,labelpad=5)
     plt.ylabel("Maturity",fontsize=15,labelpad=5)
     rotate_xticklabels(ax, 45)
@@ -230,7 +244,8 @@ def plot_sampleresult(file_name, output_folder='sampleresultPlot'):
         os.makedirs(output_folder)
 
     # Define variables to plot
-    variables = ['c25quantile', 'c90quantile', 'd25quantile', 'd90quantile', 'updateavg']
+    # variables = ['c25quantile', 'c90quantile', 'd25quantile', 'd90quantile', 'updateavg']
+    variables = ['c25quantile', 'c90quantile', 'b25quantile', 'b90quantile', 'updateavg']
     noise_level_log = np.log10(data['noise_level'])
 
     # Plot and save figures

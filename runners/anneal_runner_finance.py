@@ -475,7 +475,7 @@ class AnnealRunnerFin():
 
                     # print(x_mod.shape)
                     x_prop = x_mod + step_size * grad + noise
-                    
+
                     #### 04-16 update
                     # x_prop[:, :, mask] = refer_image[..., mask]
                     #### 04-16 update 
@@ -858,7 +858,10 @@ class AnnealRunnerFin():
                 if not self.config.data.scale:
                     savepath = os.path.join(self.args.image_folder, 'ivs_image_inpainting_denoised.png')
                     # IVS_visualize(denoised_sample[0].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = str(i) + "step_inpainting")
-                    IVS_visualize(denoised_sample[81].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = "Denoised " + str(i) + "step_inpainting")
+                    # IVS_visualize(denoised_sample[81].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = "Denoised " + str(i) + "step_inpainting")
+
+                    ### New 04-27
+                    IVS_visualize(denoised_sample[81].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = "Denoised " + "inpainting")
 
                     savepath2 = os.path.join(self.args.image_folder, 'ivs_error_inpainting_denoised.png')
                     savepathyml = os.path.join(self.args.image_folder, 'ivs_error_inpainting_denoised.yml')
