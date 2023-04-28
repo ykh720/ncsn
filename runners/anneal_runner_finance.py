@@ -554,8 +554,8 @@ class AnnealRunnerFin():
                 # print(c) # starts from 0 
 
             yamldict = {}
-            yamldict['d25quantile'] = [x.item() for x in d25quantilelist]
-            yamldict['d90quantile'] = [x.item() for x in d90quantilelist]
+            yamldict['b25quantile'] = [x.item() for x in d25quantilelist]
+            yamldict['b90quantile'] = [x.item() for x in d90quantilelist]
             yamldict['c25quantile'] = [x.item() for x in c25quantilelist]
             yamldict['c90quantile'] = [x.item() for x in c90quantilelist]
             yamldict['updateavg'] = [x.item() for x in updateavglist]
