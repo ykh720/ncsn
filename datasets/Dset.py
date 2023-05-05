@@ -48,12 +48,130 @@ def IVS_visualize(gen_row, Klist, tlist, savepath,   plotname = "",):
     # Invert the x-axis
     ax.set_xlim(ax.get_xlim()[::-1])
 
-    ax.set_title(plotname + ' IVS')
+    # ax.set_title(plotname + ' IVS')
+
+    ########### 0504    
+    ax.set_title(plotname)
+
     plt.savefig(savepath)
     plt.close()
     # plt.show()
 
     # return Z 
+
+##### OLD version
+# def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath):
+#     """surfivs shape (batch_size, image_size_y, image_size_x)"""
+
+#     def rotate_xticklabels(ax, angle):
+#         for tick in ax.get_xticklabels():
+#             tick.set_rotation(angle)
+
+#     from matplotlib.ticker import FormatStrFormatter, StrMethodFormatter
+#     import matplotlib.pyplot as plt
+#     import matplotlib.ticker as mtick
+#     import torch
+#     import numpy as np 
+
+#     indices = np.nonzero(~mask)
+#     indices = indices.tolist()
+#     indices = [tuple(x) for x in indices]
+#     # avgerror = [] 
+#     # stderror = []
+
+#     plt.figure(1,figsize=(14,4))
+#     ax=plt.subplot(1,3,1)
+#     # err = np.mean(100 * np.abs((surfivspred - surfivs)/ surfivs), axis =0) 
+#     # print(surfivs.shape)
+#     # print(surfivspred.shape)
+#     err = torch.mean(100 * torch.abs((surfivspred - surfivs)/ surfivs), dim =0) 
+#     avgerror = [err[x].item() for x in indices]
+#     # print(torch.max(err)[0])
+#     # print(err.shape)
+#     # print(err)
+#     plt.title("Average relative error",fontsize=15,y=1.04)
+#     # plt.imshow(err.reshape(len(tlist),len(Klist)))
+
+#     ### 04-27
+#     plt.imshow(err.reshape(len(tlist),len(Klist)),origin='lower')
+
+#     plt.colorbar(format=mtick.PercentFormatter())
+
+#     ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
+#     ax.set_xticklabels(Klist.astype('int'))
+
+#     # ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
+#     ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
+#     # ax.set_yticklabels([str(round(t,2)) for t in tlist][::-1])
+#     ax.set_yticklabels([str(round(t,2)) for t in tlist])
+#     # ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+#     # ax.yaxis.set_major_formatter('{x:9<5.1f}')
+#     # plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}'))
+#     plt.xlabel("Strike",fontsize=15,labelpad=5)
+#     plt.ylabel("Maturity",fontsize=15,labelpad=5)
+#     rotate_xticklabels(ax, 45)
+
+#     ax=plt.subplot(1,3,2)
+#     # err = 100*np.std(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
+#     err = 100*torch.std(torch.abs((surfivspred-surfivs)/surfivs),dim = 0)
+#     # print(torch.max(err)[0])
+#     # print(err.shape)
+#     stderror = [err[x].item() for x in indices]
+
+#     plt.title("Std relative error",fontsize=15,y=1.04)
+#     # origin='lower' 04-27 update
+#     plt.imshow(err.reshape(len(tlist),len(Klist)),origin='lower')
+#     plt.colorbar(format=mtick.PercentFormatter())
+#     ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
+#     ax.set_xticklabels(Klist.astype('int'))
+#     ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
+#     # ax.set_yticklabels([str(round(t,2)) for t in tlist][::-1])
+#     ax.set_yticklabels([str(round(t,2)) for t in tlist])
+#     plt.xlabel("Strike",fontsize=15,labelpad=5)
+#     plt.ylabel("Maturity",fontsize=15,labelpad=5)
+#     rotate_xticklabels(ax, 45)
+
+#     ax=plt.subplot(1,3,3)
+#     # err = 100*np.max(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
+#     err = 100*torch.max(torch.abs((surfivspred-surfivs)/surfivs),dim = 0)[0]
+#     # print(torch.max(err)[0])
+#     # print(err.shape)
+#     maxerror = [err[x].item() for x in indices]
+
+#     plt.title("Maximum relative error",fontsize=15,y=1.04)
+#     ## origin='lower' 04-27 update
+#     plt.imshow(err.reshape(len(tlist),len(Klist)),origin='lower')
+#     plt.colorbar(format=mtick.PercentFormatter())
+#     ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
+#     ax.set_xticklabels(Klist.astype('int'))
+#     ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
+#     ax.set_yticklabels([str(round(t,2)) for t in tlist])
+#     # ax.set_yticklabels([str(round(t,2)) for t in tlist][::-1])
+
+#     plt.xlabel("Strike",fontsize=15,labelpad=5)
+#     plt.ylabel("Maturity",fontsize=15,labelpad=5)
+#     rotate_xticklabels(ax, 45)
+    
+#     plt.tight_layout()
+#     plt.savefig(savepath, dpi=300)
+    
+#     # print(err)
+
+#     # not sure
+#     plt.close()
+#     plt.show()
+#     # print('avg', avgerror)
+
+#     dictyml = {}
+#     dictyml['indices'] = indices
+#     dictyml['avgerror'] = avgerror
+#     dictyml['stderror'] = stderror
+#     dictyml['maxerror'] = maxerror
+#     import yaml
+#     with open(ymlpath, 'w') as f:
+#         documents = yaml.dump(dictyml, f)
+
+#     return indices, avgerror, stderror, maxerror
 
 def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath):
     """surfivs shape (batch_size, image_size_y, image_size_x)"""
@@ -62,11 +180,25 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
         for tick in ax.get_xticklabels():
             tick.set_rotation(angle)
 
+    def set_ticks_and_labels(ax, ticks, labels, rotation=45):
+        ax.set_xticks(ticks)
+        ax.set_xticklabels(labels, rotation=rotation)
+    
+    if len(Klist) <= 8:
+        xticks = np.linspace(0, len(Klist) - 1, len(Klist))
+        xticklabels = Klist.astype('int')
+    else:
+        skip = len(Klist) // 8
+        xticks = np.linspace(0, len(Klist) - 1, len(Klist))[::skip]
+        xticklabels = Klist.astype('int')[::skip]
+
+
+
     from matplotlib.ticker import FormatStrFormatter, StrMethodFormatter
     import matplotlib.pyplot as plt
     import matplotlib.ticker as mtick
     import torch
-    import numpy as np 
+    # import numpy as np 
 
     indices = np.nonzero(~mask)
     indices = indices.tolist()
@@ -92,8 +224,13 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
 
     plt.colorbar(format=mtick.PercentFormatter())
 
-    ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
-    ax.set_xticklabels(Klist.astype('int'))
+    # 0504 OLD
+    # ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
+    # ax.set_xticklabels(Klist.astype('int'))
+    # rotate_xticklabels(ax, 45)
+
+    set_ticks_and_labels(ax, xticks, xticklabels)
+
 
     # ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
     ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
@@ -104,7 +241,7 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     # plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}'))
     plt.xlabel("Strike",fontsize=15,labelpad=5)
     plt.ylabel("Maturity",fontsize=15,labelpad=5)
-    rotate_xticklabels(ax, 45)
+    
 
     ax=plt.subplot(1,3,2)
     # err = 100*np.std(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
@@ -117,14 +254,19 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     # origin='lower' 04-27 update
     plt.imshow(err.reshape(len(tlist),len(Klist)),origin='lower')
     plt.colorbar(format=mtick.PercentFormatter())
-    ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
-    ax.set_xticklabels(Klist.astype('int'))
+
+    # 0504 OLD
+    # ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
+    # ax.set_xticklabels(Klist.astype('int'))
+    # rotate_xticklabels(ax, 45)
+    set_ticks_and_labels(ax, xticks, xticklabels)
+
+
     ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
     # ax.set_yticklabels([str(round(t,2)) for t in tlist][::-1])
     ax.set_yticklabels([str(round(t,2)) for t in tlist])
     plt.xlabel("Strike",fontsize=15,labelpad=5)
     plt.ylabel("Maturity",fontsize=15,labelpad=5)
-    rotate_xticklabels(ax, 45)
 
     ax=plt.subplot(1,3,3)
     # err = 100*np.max(np.abs((surfivspred-surfivs)/surfivs),axis = 0)
@@ -137,15 +279,20 @@ def inpainting_error(surfivs, surfivspred, Klist, tlist, savepath, mask, ymlpath
     ## origin='lower' 04-27 update
     plt.imshow(err.reshape(len(tlist),len(Klist)),origin='lower')
     plt.colorbar(format=mtick.PercentFormatter())
-    ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
-    ax.set_xticklabels(Klist.astype('int'))
+
+    # 0504 OLD 
+    # ax.set_xticks(np.linspace(0,len(Klist)-1,len(Klist)))
+    # ax.set_xticklabels(Klist.astype('int'))
+    # rotate_xticklabels(ax, 45)
+    set_ticks_and_labels(ax, xticks, xticklabels)
+
     ax.set_yticks(np.linspace(0,len(tlist)-1,len(tlist)))
     ax.set_yticklabels([str(round(t,2)) for t in tlist])
     # ax.set_yticklabels([str(round(t,2)) for t in tlist][::-1])
 
     plt.xlabel("Strike",fontsize=15,labelpad=5)
     plt.ylabel("Maturity",fontsize=15,labelpad=5)
-    rotate_xticklabels(ax, 45)
+    
     
     plt.tight_layout()
     plt.savefig(savepath, dpi=300)
@@ -247,16 +394,19 @@ def plot_sampleresult(file_name, output_folder='sampleresultPlot'):
     # Define variables to plot
     # variables = ['c25quantile', 'c90quantile', 'd25quantile', 'd90quantile', 'updateavg']
     variables = ['c25quantile', 'c90quantile', 'b25quantile', 'b90quantile', 'updateavg']
+    ylabellist = ['25% quantile', '90% quantile','25% quantile', '90% quantile','update rate']
     noise_level_log = np.log10(data['noise_level'])
 
     # Plot and save figures
-    for variable in variables:
+    for i in range(5):
+        variable = variables[i]
+        ylabel = ylabellist[i]
         plt.figure()
         plt.plot(noise_level_log, data[variable], marker='o')
-        plt.xlabel('log10(Noise Level)')
-        plt.ylabel(variable)
+        plt.xlabel('log10(noise level)')
+        plt.ylabel(ylabel)
 
-        plt.title(f'{variable} vs log10(Noise Level)')
+        # plt.title(f'{variable} vs log10(Noise Level)')
         plt.gca().invert_xaxis()  # Invert the x-axis
         plt.savefig(os.path.join(output_folder, f'{variable}_vs_noise_level.png'))
         # plt.show()

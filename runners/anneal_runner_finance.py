@@ -648,6 +648,10 @@ class AnnealRunnerFin():
                 else:
                     IVS_visualize(refer_image.reshape((width,width)), Klist, tlist, savepath=savepath, plotname = "original IV")
 
+            ########### 0504
+            savepathoriginal = os.path.join(self.args.image_folder, 'originalIVS_inpainting.png')
+            IVS_visualize(refer_image[81].reshape((width,width)), Klist, tlist, savepath=savepathoriginal, plotname = "Original IVS")
+
             # sample from uniform?! why
 
             # samples = torch.rand(batch_size, batch_size, 1, self.config.data.image_size, self.config.data.image_size,
@@ -861,7 +865,7 @@ class AnnealRunnerFin():
                     # IVS_visualize(denoised_sample[81].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = "Denoised " + str(i) + "step_inpainting")
 
                     ### New 04-27
-                    IVS_visualize(denoised_sample[81].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = "Denoised " + "inpainting")
+                    IVS_visualize(denoised_sample[81].reshape((width,width)), Klist, tlist, savepath=savepath, plotname = "IVS completed by score generative model")
 
                     savepath2 = os.path.join(self.args.image_folder, 'ivs_error_inpainting_denoised.png')
                     savepathyml = os.path.join(self.args.image_folder, 'ivs_error_inpainting_denoised.yml')
